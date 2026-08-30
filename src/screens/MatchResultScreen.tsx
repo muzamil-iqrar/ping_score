@@ -17,9 +17,15 @@ export default function MatchResultScreen({ navigation, route }: any) {
       </Text>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'NewMatch' }] })}
+        onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'NewMatch' }] })}
       >
         <Text style={styles.buttonText}>New Match</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.homeButton}
+        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
+      >
+        <Text style={styles.homeButtonText}>Back to Home</Text>
       </TouchableOpacity>
     </View>
   );
@@ -32,4 +38,6 @@ const styles = StyleSheet.create({
   score: { fontSize: 20, color: '#666', marginBottom: 32 },
   button: { backgroundColor: '#e63946', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  homeButton: { marginTop: 16, padding: 8 },
+  homeButtonText: { color: '#888', fontSize: 15, textDecorationLine: 'underline' },
 });

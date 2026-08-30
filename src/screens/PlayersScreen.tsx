@@ -58,21 +58,25 @@ export default function PlayersScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.addButtonText}>+ Add Player</Text>
+      </TouchableOpacity>
+
       <FlatList
         data={players}
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ padding: 16 }}
-        ListEmptyComponent={<Text style={styles.empty}>No players yet. Add one below.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>No players yet. Add one above.</Text>}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.row} onLongPress={() => handleRemove(item)}>
+          <View style={styles.row}>
             <Text style={styles.rowIcon}>{item.icon}</Text>
             <Text style={styles.rowName}>{item.name}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteButton} onPress={() => handleRemove(item)}>
+              <Text style={styles.deleteButtonIcon}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
         )}
       />
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.addButtonText}>+ Add Player</Text>
-      </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -123,7 +127,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   rowIcon: { fontSize: 28, marginRight: 14 },
-  rowName: { fontSize: 18, fontWeight: '500' },
+  rowName: { fontSize: 18, fontWeight: '500', flex: 1 },
+  deleteButton: { paddingVertical: 6, paddingHorizontal: 10 },
+  deleteButtonIcon: { fontSize: 20 },
   addButton: { backgroundColor: '#e63946', padding: 16, alignItems: 'center', margin: 16, borderRadius: 8 },
   addButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },

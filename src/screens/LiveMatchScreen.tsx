@@ -126,7 +126,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
         <View style={styles.serveBannerRow}>
           <Text style={styles.serveBannerIcon}>{servingIcon}</Text>
           <Text style={styles.serveBannerName}>{servingPlayerName}</Text>
-          <Text style={styles.serveBannerBall}>🏓</Text>
+          <View style={styles.serveBall} />
         </View>
       </Animated.View>
 
@@ -167,7 +167,14 @@ const styles = StyleSheet.create({
   serveBannerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 6, gap: 8 },
   serveBannerIcon: { fontSize: 26 },
   serveBannerName: { fontSize: 22, fontWeight: '800', color: '#222' },
-  serveBannerBall: { fontSize: 22 },
+  serveBall: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#ff8c00',
+  },
   scoreRow: { flexDirection: 'row', gap: 12 },
   scoreCard: { flex: 1, borderRadius: 16, padding: 20, alignItems: 'center', minHeight: 260, justifyContent: 'center' },
   cardA: { backgroundColor: '#fdeeee' },
