@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function signIn() {
@@ -16,7 +17,9 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🏓 Scoreboard</Text>
+      <Text style={styles.heroEmoji}>🏓</Text>
+      <Text style={styles.title}>Table Tennis</Text>
+      <Text style={styles.subtitle}>SCOREBOARD</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -25,13 +28,18 @@ export default function LoginScreen() {
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.passwordRow}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+          <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity style={styles.button} onPress={signIn} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
       </TouchableOpacity>
@@ -41,7 +49,9 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: '700', textAlign: 'center', marginBottom: 32 },
+  heroEmoji: { fontSize: 56, textAlign: 'center' },
+  title: { fontSize: 28, fontWeight: '800', textAlign: 'center', color: '#1d3557', marginTop: 4 },
+  subtitle: { fontSize: 12, fontWeight: '700', letterSpacing: 4, color: '#e63946', textAlign: 'center', marginTop: 4, marginBottom: 32 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -50,6 +60,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 16,
   },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  passwordInput: { flex: 1, padding: 14, fontSize: 16 },
+  eyeButton: { paddingHorizontal: 14 },
+  eyeIcon: { fontSize: 20 },
   button: { backgroundColor: '#e63946', borderRadius: 8, padding: 16, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

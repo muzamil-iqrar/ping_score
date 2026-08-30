@@ -8,6 +8,7 @@ export default function NewMatchScreen({ navigation }: any) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [mode, setMode] = useState<MatchMode>('singles');
   const [pointTarget, setPointTarget] = useState<10 | 20>(20);
+  const [serveInterval, setServeInterval] = useState(2);
   const [teamA, setTeamA] = useState<string[]>([]);
   const [teamB, setTeamB] = useState<string[]>([]);
 
@@ -39,7 +40,7 @@ export default function NewMatchScreen({ navigation }: any) {
   const ready = teamA.length === slotsPerTeam && teamB.length === slotsPerTeam;
 
   function handleStart() {
-    navigation.navigate('LiveMatch', { mode, pointTarget, teamA, teamB, players });
+    navigation.navigate('LiveMatch', { mode, pointTarget, serveInterval, teamA, teamB, players });
   }
 
   return (
@@ -68,6 +69,21 @@ export default function NewMatchScreen({ navigation }: any) {
             onPress={() => setPointTarget(n as 10 | 20)}
           >
             <Text style={[styles.optionText, pointTarget === n && styles.optionTextSelected]}>{n} points</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={styles.sectionTitle}>Switch serve every</Text>
+      <View style={styles.rowOptions}>
+        {[1, 2, 5].map((n) => (
+          <TouchableOpacity
+            key={n}
+            style={[styles.option, serveInterval === n && styles.optionSelected]}
+            onPress={() => setServeInterval(n)}
+          >
+            <Text style={[styles.optionText, serveInterval === n && styles.optionTextSelected]}>
+              {n} {n === 1 ? 'point' : 'points'}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>

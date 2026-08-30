@@ -13,6 +13,8 @@ const DOUBLES_ROTATION: Array<{ server: Team; serverSlot: 0 | 1; receiver: Team;
 export type MatchState = {
   mode: MatchMode;
   pointTarget: number;
+  /** Points played per turn before serve switches (every 1 point once in the deuce zone). Defaults to 2. */
+  serveInterval: number;
   scoreA: number;
   scoreB: number;
   /** Total points played so far; drives whose turn it is to serve. */
@@ -26,10 +28,11 @@ export type MatchState = {
   lastScoringTeam: Team | null;
 };
 
-export function createMatch(mode: MatchMode, pointTarget: number): MatchState {
+export function createMatch(mode: MatchMode, pointTarget: number, serveInterval: number = 2): MatchState {
   return {
     mode,
     pointTarget,
+    serveInterval,
     scoreA: 0,
     scoreB: 0,
     pointsPlayed: 0,
@@ -44,15 +47,15 @@ function isDeuceZone(scoreA: number, scoreB: number, pointTarget: number): boole
   return scoreA >= pointTarget - 1 && scoreB >= pointTarget - 1;
 }
 
-/** How many total points have been played when the serve last changed, given the switch-every-2 (or every-1 at deuce) rule. */
-function serveTurnIndex(pointsPlayed: number, scoreA: number, scoreB: number, pointTarget: number): number {
+/** How many total points have been played when the serve last changed, given the switch-every-N (or every-1 at deuce) rule. */
+function serveTurnIndex(pointsPlayed: number, scoreA: number, scoreB: number, pointTarget: number, serveInterval: number): number {
   if (isDeuceZone(scoreA, scoreB, pointTarget)) {
-    // Every point up to deuce entry used the every-2 rule; after that, every 1.
-    const pointsBeforeDeuce = 2 * (pointTarget - 1);
+    // Every point up to deuce entry used the every-N rule; after that, every 1.
+    const pointsBeforeDeuce = serveInterval * (pointTarget - 1);
     const pointsSinceDeuce = pointsPlayed - pointsBeforeDeuce;
-    return Math.floor(pointsBeforeDeuce / 2) + pointsSinceDeuce;
+    return Math.floor(pointsBeforeDeuce / serveInterval) + pointsSinceDeuce;
   }
-  return Math.floor(pointsPlayed / 2);
+  return Math.floor(pointsPlayed / serveInterval);
 }
 
 export type ServerInfo = {
@@ -62,7 +65,7 @@ export type ServerInfo = {
 };
 
 export function currentServer(state: MatchState): ServerInfo {
-  const turn = serveTurnIndex(state.pointsPlayed, state.scoreA, state.scoreB, state.pointTarget);
+  const turn = serveTurnIndex(state.pointsPlayed, state.scoreA, state.scoreB, state.pointTarget, state.serveInterval);
 
   if (state.mode === 'singles') {
     const team: Team = turn % 2 === 0 ? state.firstServerTeam : opponent(state.firstServerTeam);

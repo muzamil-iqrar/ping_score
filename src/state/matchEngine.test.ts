@@ -64,4 +64,13 @@ function assert(cond: boolean, msg: string) {
   assert(m.scoreA === 1, 'undo: score reverts to 1');
 }
 
+// Custom serve interval: switch every 5 points (every 1 at deuce).
+{
+  let m = createMatch('singles', 10, 5);
+  for (let i = 0; i < 4; i++) m = scorePoint(m, 'a');
+  assert(currentServer(m).team === 'a', 'custom interval: a still serves after 4 points');
+  m = scorePoint(m, 'a'); // 5th point
+  assert(currentServer(m).team === 'b', 'custom interval: serve switches to b after 5 points');
+}
+
 console.log('matchEngine: all checks passed');

@@ -4,7 +4,11 @@ import { supabase } from '../lib/supabase';
 export default function HomeScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🏓 Scoreboard</Text>
+      <View style={styles.hero}>
+        <Text style={styles.heroEmoji}>🏓</Text>
+        <Text style={styles.title}>Table Tennis</Text>
+        <Text style={styles.subtitle}>SCOREBOARD</Text>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('NewMatch')}>
         <Text style={styles.buttonText}>New Match</Text>
@@ -25,7 +29,10 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: '700', textAlign: 'center', marginBottom: 40 },
+  hero: { alignItems: 'center', marginBottom: 48 },
+  heroEmoji: { fontSize: 64, marginBottom: 8 },
+  title: { fontSize: 30, fontWeight: '800', textAlign: 'center', color: '#1d3557' },
+  subtitle: { fontSize: 13, fontWeight: '700', letterSpacing: 4, color: '#e63946', marginTop: 4 },
   button: { backgroundColor: '#e63946', padding: 18, borderRadius: 10, alignItems: 'center', marginBottom: 14 },
   buttonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   secondary: { backgroundColor: '#f5f5f5' },
