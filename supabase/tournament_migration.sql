@@ -1,25 +1,4 @@
--- Table Tennis Scoreboard schema.
--- Single shared login: every row is visible/editable by any authenticated user.
--- Run this in the Supabase SQL editor for your project.
-
-create table players (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  icon text not null default '🏓',
-  created_at timestamptz not null default now()
-);
-
-create table matches (
-  id uuid primary key default gen_random_uuid(),
-  mode text not null check (mode in ('singles', 'doubles')),
-  point_target integer not null check (point_target in (10, 20)),
-  team_a_player_ids uuid[] not null,
-  team_b_player_ids uuid[] not null,
-  team_a_score integer not null,
-  team_b_score integer not null,
-  winner text not null check (winner in ('a', 'b')),
-  played_at timestamptz not null default now()
-);
+-- Run this once in the Supabase SQL editor if you already set up the app.
 
 create table tournaments (
   id uuid primary key default gen_random_uuid(),
@@ -60,18 +39,9 @@ create table tournament_matches (
 create index tournament_entries_tournament_id_idx on tournament_entries(tournament_id);
 create index tournament_matches_tournament_round_idx on tournament_matches(tournament_id, round_number);
 
-alter table players enable row level security;
-alter table matches enable row level security;
 alter table tournaments enable row level security;
 alter table tournament_entries enable row level security;
 alter table tournament_matches enable row level security;
-
--- Single shared login: any authenticated user can do anything.
-create policy "authenticated full access" on players
-  for all to authenticated using (true) with check (true);
-
-create policy "authenticated full access" on matches
-  for all to authenticated using (true) with check (true);
 
 create policy "authenticated full access" on tournaments
   for all to authenticated using (true) with check (true);

@@ -10,6 +10,9 @@ import NewMatchScreen from './src/screens/NewMatchScreen';
 import LiveMatchScreen from './src/screens/LiveMatchScreen';
 import MatchResultScreen from './src/screens/MatchResultScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
+import TournamentSetupScreen from './src/screens/TournamentSetupScreen';
+import TournamentScreen from './src/screens/TournamentScreen';
+import TournamentsScreen from './src/screens/TournamentsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +34,9 @@ function AppNavigator() {
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="NewMatch" component={NewMatchScreen} />
+            <Stack.Screen name="Tournaments" component={TournamentsScreen} options={{ title: 'Tournaments' }} />
+            <Stack.Screen name="TournamentSetup" component={TournamentSetupScreen} options={{ title: 'New Tournament' }} />
+            <Stack.Screen name="Tournament" component={TournamentScreen} options={{ title: 'Tournament' }} />
             <Stack.Screen name="LiveMatch" component={LiveMatchScreen} options={{ headerBackVisible: false }} />
             <Stack.Screen name="MatchResult" component={MatchResultScreen} options={{ headerBackVisible: false }} />
             <Stack.Screen name="History" component={HistoryScreen} />

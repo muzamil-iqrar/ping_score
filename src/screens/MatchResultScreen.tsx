@@ -2,11 +2,11 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Props = {
   navigation: any;
-  route: { params: { winnerLabel: string; scoreA: number; scoreB: number } };
+  route: { params: { winnerLabel: string; scoreA: number; scoreB: number; tournamentId?: string } };
 };
 
 export default function MatchResultScreen({ navigation, route }: any) {
-  const { winnerLabel, scoreA, scoreB }: Props['route']['params'] = route.params;
+  const { winnerLabel, scoreA, scoreB, tournamentId }: Props['route']['params'] = route.params;
 
   return (
     <View style={styles.container}>
@@ -15,12 +15,21 @@ export default function MatchResultScreen({ navigation, route }: any) {
       <Text style={styles.score}>
         {scoreA} - {scoreB}
       </Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'NewMatch' }] })}
-      >
-        <Text style={styles.buttonText}>New Match</Text>
-      </TouchableOpacity>
+      {tournamentId ? (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'Tournament', params: { tournamentId } }] })}
+        >
+          <Text style={styles.buttonText}>Back to tournament</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'NewMatch' }] })}
+        >
+          <Text style={styles.buttonText}>New Match</Text>
+        </TouchableOpacity>
+      )}
       <TouchableOpacity
         style={styles.homeButton}
         onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}

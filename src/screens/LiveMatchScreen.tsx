@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { recordMatch } from '../lib/api';
+import { recordMatch, recordTournamentMatchResult } from '../lib/api';
 import { useMatchSounds } from '../lib/sounds';
 import { MatchMode, Player } from '../lib/types';
 import { createMatch, currentServer, scorePoint, undoPoint } from '../state/matchEngine';
@@ -16,12 +16,16 @@ type Props = {
       teamA: string[];
       teamB: string[];
       players: Player[];
+      tournamentId?: string;
+      tournamentMatchId?: string;
+      teamAEntryId?: string;
+      teamBEntryId?: string;
     };
   };
 };
 
 export default function LiveMatchScreen({ navigation, route }: any) {
-  const { mode, pointTarget, serveInterval, teamA, teamB, players }: Props['route']['params'] = route.params;
+  const { mode, pointTarget, serveInterval, teamA, teamB, players, tournamentId, tournamentMatchId, teamAEntryId, teamBEntryId }: Props['route']['params'] = route.params;
   const [match, setMatch] = useState(() => createMatch(mode, pointTarget, serveInterval));
   const [saving, setSaving] = useState(false);
   const sounds = useMatchSounds();
@@ -63,6 +67,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   }
 
   async function handlePoint(team: 'a' | 'b') {
+    if (match.winner || saving) return;
     const next = scorePoint(match, team);
     setMatch(next);
     bump(team === 'a' ? scoreAScale : scoreBScale);
@@ -83,10 +88,18 @@ export default function LiveMatchScreen({ navigation, route }: any) {
           team_b_score: next.scoreB,
           winner: next.winner,
         });
+        if (tournamentMatchId && teamAEntryId && teamBEntryId) {
+          await recordTournamentMatchResult(tournamentMatchId, {
+            team_a_score: next.scoreA,
+            team_b_score: next.scoreB,
+            winner_entry_id: next.winner === 'a' ? teamAEntryId : teamBEntryId,
+          });
+        }
         navigation.replace('MatchResult', {
           winnerLabel: teamLabel(next.winner === 'a' ? teamA : teamB),
           scoreA: next.scoreA,
           scoreB: next.scoreB,
+          tournamentId,
         });
       } catch (e: any) {
         Alert.alert('Error saving match', e.message);

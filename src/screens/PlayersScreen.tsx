@@ -3,7 +3,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -79,37 +82,43 @@ export default function PlayersScreen() {
       />
 
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>New Player</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              value={name}
-              onChangeText={setName}
-              autoFocus
-            />
-            <View style={styles.iconGrid}>
-              {PLAYER_ICONS.map((i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.iconOption, icon === i && styles.iconOptionSelected]}
-                  onPress={() => setIcon(i)}
-                >
-                  <Text style={styles.iconOptionText}>{i}</Text>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>New Player</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Name"
+                placeholderTextColor="#6b7280"
+                value={name}
+                onChangeText={setName}
+                autoFocus
+              />
+              <View style={styles.iconGrid}>
+                {PLAYER_ICONS.map((i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[styles.iconOption, icon === i && styles.iconOptionSelected]}
+                    onPress={() => setIcon(i)}
+                  >
+                    <Text style={styles.iconOptionText}>{i}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.modalActions}>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
-              ))}
+                <TouchableOpacity style={styles.saveButton} onPress={handleAdd}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.modalActions}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAdd}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -132,10 +141,11 @@ const styles = StyleSheet.create({
   deleteButtonIcon: { fontSize: 20 },
   addButton: { backgroundColor: '#e63946', padding: 16, alignItems: 'center', margin: 16, borderRadius: 8 },
   addButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalContent: { flexGrow: 1, justifyContent: 'flex-end' },
   modalCard: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 14, fontSize: 16, marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 14, fontSize: 16, color: '#1d3557', marginBottom: 16 },
   iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   iconOption: {
     width: 48,

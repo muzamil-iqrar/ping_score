@@ -13,6 +13,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('NewMatch')}>
         <Text style={styles.buttonText}>New Match</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={[styles.button, styles.tournamentButton]} onPress={() => navigation.navigate('Tournaments')}>
+        <Text style={styles.buttonText}>Tournament</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={[styles.button, styles.secondary]} onPress={() => navigation.navigate('History')}>
         <Text style={[styles.buttonText, styles.secondaryText]}>Match History</Text>
       </TouchableOpacity>
@@ -34,6 +37,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: '800', textAlign: 'center', color: '#1d3557' },
   subtitle: { fontSize: 13, fontWeight: '700', letterSpacing: 4, color: '#e63946', marginTop: 4 },
   button: { backgroundColor: '#e63946', padding: 18, borderRadius: 10, alignItems: 'center', marginBottom: 14 },
+  tournamentButton: { backgroundColor: '#1d3557' },
   buttonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   secondary: { backgroundColor: '#f5f5f5' },
   secondaryText: { color: '#333' },
