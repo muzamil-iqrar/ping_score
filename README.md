@@ -13,6 +13,15 @@ Track singles/doubles table tennis matches: point tracking to 10 or 20 (win by 2
 
 If the app was already set up, run [`supabase/tournament_migration.sql`](supabase/tournament_migration.sql) in the Supabase SQL editor before using Tournament mode. If you ran that migration before the matches-per-opponent setting was added, also run [`supabase/tournament_settings_migration.sql`](supabase/tournament_settings_migration.sql).
 
+## Keep Supabase awake
+
+The workflow in [`.github/workflows/keep-supabase-awake.yml`](.github/workflows/keep-supabase-awake.yml) runs a small database query every day. Add these repository secrets in GitHub under Settings → Secrets and variables → Actions:
+
+- `SUPABASE_URL` — your project URL, for example `https://your-project.supabase.co`.
+- `SUPABASE_SERVICE_ROLE_KEY` — the `service_role` key from Supabase → Project Settings → API. Keep this key out of the app and out of `.env` files that Expo can read.
+
+You can run the workflow immediately from the repository's Actions tab after adding the secrets.
+
 ## Structure
 
 - `src/state/matchEngine.ts` — pure scoring/serve-rotation logic (run `npx tsx src/state/matchEngine.test.ts` to verify).
