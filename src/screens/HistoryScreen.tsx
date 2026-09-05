@@ -1,3 +1,4 @@
+import { colors, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
@@ -28,14 +29,15 @@ export default function HistoryScreen() {
   return (
     <FlatList
       style={styles.container}
-      contentContainerStyle={{ padding: 16 }}
+      contentContainerStyle={ui.content}
+      ListHeaderComponent={<PageHeading eyebrow="THE ARCHIVE" title="Games worth keeping." subtitle="The close calls. The comebacks. Every final score." />}
       data={matches}
       keyExtractor={(m) => m.id}
-      ListEmptyComponent={<Text style={styles.empty}>No matches played yet.</Text>}
+      ListEmptyComponent={<EmptyState title="A fresh scorebook" detail="Finish your first match and the result will land right here." />}
       renderItem={({ item }) => {
         const aWon = item.winner === 'a';
         return (
-          <View style={styles.card}>
+          <Reveal style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.mode}>{item.mode === 'singles' ? 'Singles' : 'Doubles'} · to {item.point_target}</Text>
               <Text style={styles.date}>{new Date(item.played_at).toLocaleDateString()}</Text>
@@ -51,7 +53,7 @@ export default function HistoryScreen() {
                 {label(item.team_b_player_ids)} {!aWon ? '🏆' : ''}
               </Text>
             </View>
-          </View>
+          </Reveal>
         );
       }}
     />
@@ -59,14 +61,14 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  empty: { textAlign: 'center', color: '#888', marginTop: 40 },
-  card: { backgroundColor: '#f5f5f5', borderRadius: 12, padding: 16, marginBottom: 12 },
+  container: { flex: 1, backgroundColor: colors.background },
+  empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
+  card: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  mode: { fontSize: 13, color: '#888', fontWeight: '600' },
-  date: { fontSize: 13, color: '#888' },
+  mode: { fontSize: 13, color: colors.muted, fontWeight: '600' },
+  date: { fontSize: 13, color: colors.muted },
   matchup: { alignItems: 'center' },
-  team: { fontSize: 16, fontWeight: '500', marginBottom: 4 },
-  winnerText: { fontWeight: '800', color: '#e63946' },
-  score: { fontSize: 24, fontWeight: '800', marginVertical: 4 },
+  team: { color: colors.text, fontSize: 16, fontWeight: '500', marginBottom: 4 },
+  winnerText: { fontWeight: '800', color: colors.lime },
+  score: { color: colors.text, fontSize: 44, fontWeight: '800', letterSpacing: -2, fontVariant: ['tabular-nums'], marginVertical: 10 },
 });

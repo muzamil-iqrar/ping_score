@@ -1,6 +1,9 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { colors, useReducedMotion } from './src/components/ui';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
 import HeaderLogo from './src/components/HeaderLogo';
 import LoginScreen from './src/screens/LoginScreen';
@@ -18,18 +21,19 @@ const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
   const { session, loading } = useAuth();
+  const reducedMotion = useReducedMotion();
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.lime} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerTitle: () => <HeaderLogo /> }}>
+    <NavigationContainer theme={{ ...DarkTheme, colors: { ...DarkTheme.colors, background: colors.background, card: colors.background, text: colors.text, border: colors.border, primary: colors.lime } }}>
+      <Stack.Navigator screenOptions={{ headerTitle: () => <HeaderLogo />, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.lime, headerShadowVisible: false, contentStyle: { backgroundColor: colors.background }, animation: reducedMotion ? 'none' : 'slide_from_right' }}>
         {session ? (
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
@@ -52,8 +56,11 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <StatusBar style="light" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom', 'left', 'right']}>
+        <AuthProvider><AppNavigator /></AuthProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

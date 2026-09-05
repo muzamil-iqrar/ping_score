@@ -1,5 +1,6 @@
+import { colors, Reveal, Touch as TouchableOpacity, ui, useReducedMotion } from '../components/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { recordMatch, recordTournamentMatchResult } from '../lib/api';
 import { useMatchSounds } from '../lib/sounds';
@@ -29,6 +30,8 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   const [match, setMatch] = useState(() => createMatch(mode, pointTarget, serveInterval));
   const [saving, setSaving] = useState(false);
   const sounds = useMatchSounds();
+  const reducedMotion = useReducedMotion();
+  const wide = useWindowDimensions().width > 680;
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const server = currentServer(match);
@@ -39,7 +42,8 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   const serveBannerScale = useRef(new Animated.Value(1)).current;
 
   function bump(anim: Animated.Value) {
-    anim.setValue(1.3);
+    if (reducedMotion) return;
+    anim.setValue(1.18);
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, friction: 4 }).start();
   }
 
@@ -47,13 +51,13 @@ export default function LiveMatchScreen({ navigation, route }: any) {
     const key = `${server.team}${server.slot}`;
     if (key !== prevServerKey.current) {
       prevServerKey.current = key;
-      Animated.sequence([
+      if (!reducedMotion) Animated.sequence([
         Animated.timing(serveBannerScale, { toValue: 1.08, duration: 120, useNativeDriver: true }),
         Animated.spring(serveBannerScale, { toValue: 1, useNativeDriver: true, friction: 4 }),
       ]).start();
       sounds.playServeSwitch();
     }
-  }, [server.team, server.slot]);
+  }, [server.team, server.slot, reducedMotion]);
 
   function nameFor(id: string) {
     return playerById.get(id)?.name ?? '?';
@@ -118,6 +122,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
       <View key={id} style={styles.playerRow}>
         <Text style={styles.playerIcon}>{iconFor(id)}</Text>
         <Text style={styles.playerName}>{nameFor(id)}</Text>
+        {isServing(team, slot) && <View style={[styles.serverDot, { backgroundColor: team === 'a' ? colors.lime : colors.blue }]} />}
       </View>
     );
   }
@@ -126,77 +131,42 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   const servingPlayerName = mode === 'doubles' ? nameFor((server.team === 'a' ? teamA : teamB)[server.slot]) : servingTeamLabel;
   const servingIcon = mode === 'doubles' ? iconFor((server.team === 'a' ? teamA : teamB)[server.slot]) : iconFor((server.team === 'a' ? teamA : teamB)[0]);
 
+  const deuce = match.scoreA >= pointTarget - 1 && match.scoreB >= pointTarget - 1;
+  const matchPoint = !match.winner && Math.max(match.scoreA, match.scoreB) >= pointTarget - 1 && match.scoreA !== match.scoreB;
+
   return (
-    <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.serveBanner,
-          server.team === 'a' ? styles.serveBannerA : styles.serveBannerB,
-          { transform: [{ scale: serveBannerScale }] },
-        ]}
-      >
-        <Text style={styles.serveBannerLabel}>NOW SERVING</Text>
-        <View style={styles.serveBannerRow}>
-          <Text style={styles.serveBannerIcon}>{servingIcon}</Text>
-          <Text style={styles.serveBannerName}>{servingPlayerName}</Text>
-          <View style={styles.serveBall} />
-        </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Reveal style={styles.topRow}><View><Text style={ui.eyebrow}>LIVE AT THE TABLE</Text><Text style={styles.title}>Make it count.</Text></View><View style={styles.liveBadge}><View style={styles.serverDot} /><Text style={styles.liveText}>{saving ? 'SAVING' : match.winner ? 'FINISHED' : 'LIVE'}</Text></View></Reveal>
+      <View style={styles.metaRow}><Text style={styles.meta}>{mode.toUpperCase()}</Text><Text style={styles.meta}>FIRST TO {pointTarget}</Text><Text style={styles.meta}>WIN BY 2</Text></View>
+      <Animated.View style={[styles.serveBanner, server.team === 'a' ? styles.serveBannerA : styles.serveBannerB, { transform: [{ scale: serveBannerScale }] }]}>
+        <View style={{ flex: 1 }}><Text style={styles.serveBannerLabel}>NOW SERVING</Text><Text style={styles.serveBannerName}>{servingIcon} {servingPlayerName}</Text></View><View style={styles.serveBall} />
       </Animated.View>
-
       <View style={styles.scoreRow}>
-        <TouchableOpacity style={[styles.scoreCard, styles.cardA]} onPress={() => handlePoint('a')} disabled={saving}>
-          {teamA.map((id, i) => renderTeamPlayer(id, 'a', i))}
-          <Animated.Text style={[styles.score, { transform: [{ scale: scoreAScale }] }]}>{match.scoreA}</Animated.Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.scoreCard, styles.cardB]} onPress={() => handlePoint('b')} disabled={saving}>
-          {teamB.map((id, i) => renderTeamPlayer(id, 'b', i))}
-          <Animated.Text style={[styles.score, { transform: [{ scale: scoreBScale }] }]}>{match.scoreB}</Animated.Text>
-        </TouchableOpacity>
+        {(['a', 'b'] as const).map(team => {
+          const ids = team === 'a' ? teamA : teamB;
+          const value = team === 'a' ? match.scoreA : match.scoreB;
+          const accent = team === 'a' ? colors.lime : colors.blue;
+          return <TouchableOpacity key={team} style={[styles.scoreCard, team === 'a' ? styles.cardA : styles.cardB, wide && { minHeight: 350 }]} onPress={() => handlePoint(team)} disabled={saving || Boolean(match.winner)} accessibilityLabel={`Add point to ${teamLabel(ids)}. Current score ${value}`}>
+            <Text style={[styles.teamLabel, { color: accent }]}>TEAM {team.toUpperCase()}</Text>
+            <View style={styles.playerList}>{ids.map((id, i) => renderTeamPlayer(id, team, i))}</View>
+            <Animated.Text adjustsFontSizeToFit numberOfLines={1} style={[styles.score, wide && { fontSize: 120 }, { color: accent, transform: [{ scale: team === 'a' ? scoreAScale : scoreBScale }] }]}>{String(value).padStart(2, '0')}</Animated.Text>
+            <View style={[styles.addPoint, { borderColor: team === 'a' ? '#4A6334' : '#375967' }]}><Text style={[styles.addPointText, { color: accent }]}>+1</Text></View><Text style={styles.tapHint}>TAP TO SCORE</Text>
+          </TouchableOpacity>;
+        })}
       </View>
-
-      <Text style={styles.hint}>Tap a side to award it a point · playing to {pointTarget}</Text>
-
-      {match.lastScoringTeam && (
-        <TouchableOpacity style={styles.undoButton} onPress={() => setMatch(undoPoint(match))}>
-          <Text style={styles.undoText}>Undo last point</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+      <View style={styles.matchStatus}>{saving ? <ActivityIndicator color={colors.lime} /> : <Text style={[styles.hint, (deuce || matchPoint) && { color: colors.lime }]}>{match.winner ? 'Match complete' : matchPoint ? 'MATCH POINT · One more could do it.' : deuce ? 'DEUCE · Two clear points to win.' : 'Keep your eyes on the ball. Tap a side to score.'}</Text>}</View>
+      <TouchableOpacity style={[styles.undoButton, (!match.lastScoringTeam || saving) && { opacity: 0.35 }]} disabled={!match.lastScoringTeam || saving} onPress={() => setMatch(undoPoint(match))}><Text style={styles.undoText}>↶  Undo last point</Text></TouchableOpacity>
+      <Text style={styles.bottomNote}>{deuce ? 'SERVE CHANGES EVERY POINT AT DEUCE' : `SERVE CHANGES EVERY ${serveInterval} ${serveInterval === 1 ? 'POINT' : 'POINTS'}`}</Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16, justifyContent: 'center' },
-  serveBanner: {
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    marginBottom: 20,
-    borderWidth: 2,
-  },
-  serveBannerA: { backgroundColor: '#fdeeee', borderColor: '#e63946' },
-  serveBannerB: { backgroundColor: '#eef2f7', borderColor: '#1d3557' },
-  serveBannerLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 2, color: '#888', textAlign: 'center' },
-  serveBannerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 6, gap: 8 },
-  serveBannerIcon: { fontSize: 26 },
-  serveBannerName: { fontSize: 22, fontWeight: '800', color: '#222' },
-  serveBall: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#ff8c00',
-  },
-  scoreRow: { flexDirection: 'row', gap: 12 },
-  scoreCard: { flex: 1, borderRadius: 16, padding: 20, alignItems: 'center', minHeight: 260, justifyContent: 'center' },
-  cardA: { backgroundColor: '#fdeeee' },
-  cardB: { backgroundColor: '#eef2f7' },
-  playerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  playerIcon: { fontSize: 18, marginRight: 4 },
-  playerName: { fontSize: 15, fontWeight: '600' },
-  score: { fontSize: 64, fontWeight: '800', marginTop: 16 },
-  hint: { textAlign: 'center', color: '#888', marginTop: 20 },
-  undoButton: { alignSelf: 'center', marginTop: 20, padding: 12 },
-  undoText: { color: '#888', fontSize: 15, textDecorationLine: 'underline' },
+  container: { flex: 1, backgroundColor: colors.background }, content: { flexGrow: 1, justifyContent: 'center', padding: 22, width: '100%', maxWidth: 920, alignSelf: 'center', paddingBottom: 35 },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }, title: { color: colors.text, fontSize: 31, fontWeight: '800', letterSpacing: -1 }, liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.limeSoft, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 9 }, liveText: { color: colors.lime, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+  metaRow: { flexDirection: 'row', gap: 15, marginTop: 18, marginBottom: 24, flexWrap: 'wrap' }, meta: { color: colors.muted, fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
+  serveBanner: { borderRadius: 18, padding: 18, marginBottom: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }, serveBannerA: { backgroundColor: colors.limeSoft, borderColor: '#405632' }, serveBannerB: { backgroundColor: colors.blueSoft, borderColor: '#365260' }, serveBannerLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 2, color: colors.muted }, serveBannerName: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 6 }, serveBall: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.text, marginRight: 6 },
+  scoreRow: { flexDirection: 'row', gap: 12 }, scoreCard: { flex: 1, minWidth: 0, borderRadius: 24, borderWidth: 1, padding: 16, alignItems: 'center', minHeight: 290, justifyContent: 'center' }, cardA: { backgroundColor: '#1B291C', borderColor: '#3C5130' }, cardB: { backgroundColor: '#17272D', borderColor: '#314C58' }, teamLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 2, marginBottom: 17 }, playerList: { minHeight: 44, justifyContent: 'center', width: '100%' }, playerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4, gap: 4 }, playerIcon: { fontSize: 16 }, playerName: { fontSize: 13, fontWeight: '600', color: colors.text, flexShrink: 1, textAlign: 'center' }, serverDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.lime },
+  score: { fontSize: 76, lineHeight: 135, fontWeight: '800', letterSpacing: -4, fontVariant: ['tabular-nums'], width: '100%', textAlign: 'center' }, addPoint: { borderWidth: 1, borderRadius: 15, paddingVertical: 6, paddingHorizontal: 17 }, addPointText: { fontSize: 18, fontWeight: '700' }, tapHint: { color: colors.muted, fontSize: 8, letterSpacing: 1.7, marginTop: 14 },
+  matchStatus: { minHeight: 64, justifyContent: 'center' }, hint: { textAlign: 'center', color: colors.muted, fontSize: 12, lineHeight: 20 }, undoButton: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 25, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }, undoText: { color: colors.text, fontSize: 13, fontWeight: '600' }, bottomNote: { color: colors.muted, fontSize: 8, textAlign: 'center', letterSpacing: 1.5, marginTop: 27 },
 });

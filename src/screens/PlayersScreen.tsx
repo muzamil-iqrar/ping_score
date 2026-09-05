@@ -1,3 +1,4 @@
+import { colors, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -10,7 +11,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { addPlayer, fetchPlayers, removePlayer } from '../lib/api';
@@ -61,27 +61,24 @@ export default function PlayersScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.addButtonText}>+ Add Player</Text>
-      </TouchableOpacity>
-
       <FlatList
+        ListHeaderComponent={<><PageHeading eyebrow="THE CLUB" title="Your starting lineup." subtitle={`${players.length} ${players.length === 1 ? 'player' : 'players'}. Always room for one more.`} /><TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}><Text style={styles.addButtonText}>+ Add player</Text></TouchableOpacity></>}
         data={players}
         keyExtractor={(p) => p.id}
-        contentContainerStyle={{ padding: 16 }}
-        ListEmptyComponent={<Text style={styles.empty}>No players yet. Add one above.</Text>}
+        contentContainerStyle={ui.content}
+        ListEmptyComponent={<EmptyState title="Who’s up for a game?" detail="Add your first player with a name and an avatar. Your lineup will appear here." />}
         renderItem={({ item }) => (
-          <View style={styles.row}>
+          <Reveal style={styles.row}>
             <Text style={styles.rowIcon}>{item.icon}</Text>
             <Text style={styles.rowName}>{item.name}</Text>
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleRemove(item)}>
-              <Text style={styles.deleteButtonIcon}>🗑️</Text>
+            <TouchableOpacity accessibilityLabel={`Remove ${item.name}`} style={styles.deleteButton} onPress={() => handleRemove(item)}>
+              <Text style={styles.deleteButtonIcon}>×</Text>
             </TouchableOpacity>
-          </View>
+          </Reveal>
         )}
       />
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <KeyboardAvoidingView
           style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -101,6 +98,8 @@ export default function PlayersScreen() {
                 {PLAYER_ICONS.map((i) => (
                   <TouchableOpacity
                     key={i}
+                    accessibilityLabel={`Choose ${i} avatar`}
+                    accessibilityState={{ selected: icon === i }}
                     style={[styles.iconOption, icon === i && styles.iconOptionSelected]}
                     onPress={() => setIcon(i)}
                   >
@@ -125,41 +124,41 @@ export default function PlayersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  empty: { textAlign: 'center', color: '#888', marginTop: 40 },
+  container: { flex: 1, backgroundColor: colors.background },
+  empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
     marginBottom: 10,
   },
   rowIcon: { fontSize: 28, marginRight: 14 },
-  rowName: { fontSize: 18, fontWeight: '500', flex: 1 },
+  rowName: { color: colors.text, fontSize: 18, fontWeight: '500', flex: 1 },
   deleteButton: { paddingVertical: 6, paddingHorizontal: 10 },
-  deleteButtonIcon: { fontSize: 20 },
-  addButton: { backgroundColor: '#e63946', padding: 16, alignItems: 'center', margin: 16, borderRadius: 8 },
-  addButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  deleteButtonIcon: { color: colors.muted, fontSize: 25 },
+  addButton: { backgroundColor: colors.lime, padding: 16, alignItems: 'center', marginBottom: 22, borderRadius: 14 },
+  addButtonText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   modalContent: { flexGrow: 1, justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 14, fontSize: 16, color: '#1d3557', marginBottom: 16 },
+  modalCard: { width: '100%', maxWidth: 600, alignSelf: 'center', backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  modalTitle: { color: colors.text, fontSize: 20, fontWeight: '700', marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14, fontSize: 16, color: colors.text, marginBottom: 16 },
   iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   iconOption: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#eee',
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconOptionSelected: { borderColor: '#e63946', backgroundColor: '#fdeeee' },
+  iconOptionSelected: { borderColor: colors.lime, backgroundColor: colors.limeSoft },
   iconOptionText: { fontSize: 22 },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, alignItems: 'center' },
-  cancelText: { fontSize: 16, color: '#888' },
-  saveButton: { backgroundColor: '#e63946', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  cancelText: { fontSize: 16, color: colors.muted },
+  saveButton: { backgroundColor: colors.lime, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14 },
+  saveButtonText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
 });

@@ -1,6 +1,7 @@
+import { colors, EmptyState, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { fetchPlayers } from '../lib/api';
 import { MatchMode, Player } from '../lib/types';
 
@@ -44,13 +45,15 @@ export default function NewMatchScreen({ navigation }: any) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
-      <Text style={styles.sectionTitle}>Mode</Text>
+    <ScrollView style={styles.container} contentContainerStyle={ui.content}>
+      <PageHeading eyebrow="MATCH DAY / SETUP" title="Set the table." subtitle="Pick your format, choose your sides, and play." />
+      <Text style={styles.sectionTitle}>01 / Match format</Text>
       <View style={styles.rowOptions}>
         {(['singles', 'doubles'] as MatchMode[]).map((m) => (
           <TouchableOpacity
             key={m}
             style={[styles.option, mode === m && styles.optionSelected]}
+            accessibilityState={{ selected: mode === m }}
             onPress={() => handleModeChange(m)}
           >
             <Text style={[styles.optionText, mode === m && styles.optionTextSelected]}>
@@ -60,12 +63,13 @@ export default function NewMatchScreen({ navigation }: any) {
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Play to</Text>
+      <Text style={styles.sectionTitle}>02 / Points to win</Text>
       <View style={styles.rowOptions}>
         {[10, 20].map((n) => (
           <TouchableOpacity
             key={n}
             style={[styles.option, pointTarget === n && styles.optionSelected]}
+            accessibilityState={{ selected: pointTarget === n }}
             onPress={() => setPointTarget(n as 10 | 20)}
           >
             <Text style={[styles.optionText, pointTarget === n && styles.optionTextSelected]}>{n} points</Text>
@@ -73,12 +77,13 @@ export default function NewMatchScreen({ navigation }: any) {
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Switch serve every</Text>
+      <Text style={styles.sectionTitle}>03 / Service rotation</Text>
       <View style={styles.rowOptions}>
         {[1, 2, 5].map((n) => (
           <TouchableOpacity
             key={n}
             style={[styles.option, serveInterval === n && styles.optionSelected]}
+            accessibilityState={{ selected: serveInterval === n }}
             onPress={() => setServeInterval(n)}
           >
             <Text style={[styles.optionText, serveInterval === n && styles.optionTextSelected]}>
@@ -88,30 +93,35 @@ export default function NewMatchScreen({ navigation }: any) {
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Team A {mode === 'doubles' ? `(${teamA.length}/2)` : ''}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.lime }]}>04 / Team A {mode === 'doubles' ? `(${teamA.length}/2)` : ''}</Text>
+      {players.length === 0 && <TouchableOpacity onPress={() => navigation.navigate('Players')}><EmptyState title="Your table needs players" detail="Tap here to add players, then come back to pick your sides." /></TouchableOpacity>}
       <View style={styles.playerGrid}>
         {players.map((p) => (
           <TouchableOpacity
             key={`a-${p.id}`}
-            style={[styles.playerChip, teamA.includes(p.id) && styles.playerChipSelectedA]}
+            style={[styles.playerChip, teamA.includes(p.id) && styles.playerChipSelectedA, teamB.includes(p.id) && { opacity: 0.3 }]}
             onPress={() => togglePlayer(p.id, 'a')}
+            disabled={teamB.includes(p.id)}
+            accessibilityState={{ selected: teamA.includes(p.id) }}
           >
             <Text style={styles.playerChipIcon}>{p.icon}</Text>
-            <Text style={styles.playerChipText}>{p.name}</Text>
+            <Text style={styles.playerChipText}>{p.name}{teamA.includes(p.id) ? ' ✓' : ''}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Team B {mode === 'doubles' ? `(${teamB.length}/2)` : ''}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.blue }]}>05 / Team B {mode === 'doubles' ? `(${teamB.length}/2)` : ''}</Text>
       <View style={styles.playerGrid}>
         {players.map((p) => (
           <TouchableOpacity
             key={`b-${p.id}`}
-            style={[styles.playerChip, teamB.includes(p.id) && styles.playerChipSelectedB]}
+            style={[styles.playerChip, teamB.includes(p.id) && styles.playerChipSelectedB, teamA.includes(p.id) && { opacity: 0.3 }]}
             onPress={() => togglePlayer(p.id, 'b')}
+            disabled={teamA.includes(p.id)}
+            accessibilityState={{ selected: teamB.includes(p.id) }}
           >
             <Text style={styles.playerChipIcon}>{p.icon}</Text>
-            <Text style={styles.playerChipText}>{p.name}</Text>
+            <Text style={styles.playerChipText}>{p.name}{teamB.includes(p.id) ? ' ✓' : ''}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -121,35 +131,35 @@ export default function NewMatchScreen({ navigation }: any) {
         onPress={handleStart}
         disabled={!ready}
       >
-        <Text style={styles.startButtonText}>Start Match</Text>
+        <Text style={styles.startButtonText}>{ready ? 'Start match  →' : 'Choose both sides to start'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', marginTop: 20, marginBottom: 10 },
+  container: { flex: 1, backgroundColor: colors.background },
+  sectionTitle: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 20, marginBottom: 10 },
   rowOptions: { flexDirection: 'row', gap: 10 },
-  option: { flex: 1, borderWidth: 2, borderColor: '#eee', borderRadius: 10, padding: 14, alignItems: 'center' },
-  optionSelected: { borderColor: '#e63946', backgroundColor: '#fdeeee' },
-  optionText: { fontSize: 16, color: '#333' },
-  optionTextSelected: { color: '#e63946', fontWeight: '700' },
+  option: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14, alignItems: 'center' },
+  optionSelected: { borderColor: colors.lime, backgroundColor: colors.limeSoft },
+  optionText: { fontSize: 16, color: colors.text },
+  optionTextSelected: { color: colors.lime, fontWeight: '700' },
   playerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   playerChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#eee',
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 14,
   },
-  playerChipSelectedA: { borderColor: '#e63946', backgroundColor: '#fdeeee' },
-  playerChipSelectedB: { borderColor: '#1d3557', backgroundColor: '#eef2f7' },
+  playerChipSelectedA: { borderColor: colors.lime, backgroundColor: colors.limeSoft },
+  playerChipSelectedB: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
   playerChipIcon: { fontSize: 18, marginRight: 6 },
-  playerChipText: { fontSize: 15, fontWeight: '500' },
-  startButton: { backgroundColor: '#e63946', padding: 16, alignItems: 'center', borderRadius: 8, marginTop: 30, marginBottom: 20 },
-  startButtonDisabled: { backgroundColor: '#ccc' },
-  startButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  playerChipText: { color: colors.text, fontSize: 15, fontWeight: '500' },
+  startButton: { backgroundColor: colors.lime, padding: 16, alignItems: 'center', borderRadius: 14, marginTop: 30, marginBottom: 20 },
+  startButtonDisabled: { backgroundColor: colors.border },
+  startButtonText: { color: colors.ink, fontSize: 16, fontWeight: '700' },
 });

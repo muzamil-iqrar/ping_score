@@ -4,6 +4,8 @@ Track singles/doubles table tennis matches: point tracking to 10 or 20 (win by 2
 
 ## Setup
 
+Use Node.js 22.13 or newer and Expo Go for SDK 57. The app uses Expo SDK 57, React Native 0.86, and React 19.2.
+
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In the Supabase SQL editor, run [`supabase/schema.sql`](supabase/schema.sql).
 3. In Supabase → Authentication → Users, manually create one user (email + password) — this is the shared login you and your teammate will both use.
