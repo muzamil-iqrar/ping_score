@@ -31,6 +31,11 @@ export async function recordMatch(match: Omit<Match, 'id' | 'played_at'>): Promi
   return data;
 }
 
+export async function deleteMatch(id: string): Promise<void> {
+  const { error } = await supabase.from('matches').delete().eq('id', id);
+  if (error) throw error;
+}
+
 type TournamentSettings = Pick<Tournament, 'name' | 'mode' | 'point_target' | 'serve_interval' | 'matches_per_opponent'>;
 
 export async function createTournament(settings: TournamentSettings, teams: string[][]): Promise<Tournament> {
@@ -68,6 +73,11 @@ export async function fetchTournaments(): Promise<Tournament[]> {
   return data;
 }
 
+export async function deleteTournament(id: string): Promise<void> {
+  const { error } = await supabase.from('tournaments').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function fetchTournament(tournamentId: string): Promise<{
   tournament: Tournament;
   entries: TournamentEntry[];
@@ -90,9 +100,12 @@ export async function recordTournamentMatchResult(
   tournamentMatchId: string,
   result: Pick<TournamentMatch, 'team_a_score' | 'team_b_score' | 'winner_entry_id'>
 ): Promise<void> {
+  // Only write if the fixture is still unplayed, so two concurrent plays of the same
+  // fixture (e.g. a double-tap into LiveMatch) can't silently overwrite each other.
   const { error } = await supabase
     .from('tournament_matches')
     .update({ ...result, played_at: new Date().toISOString() })
-    .eq('id', tournamentMatchId);
+    .eq('id', tournamentMatchId)
+    .is('winner_entry_id', null);
   if (error) throw error;
 }

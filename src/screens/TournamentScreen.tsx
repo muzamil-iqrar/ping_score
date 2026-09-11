@@ -1,5 +1,5 @@
 import { colors, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Modal, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { fetchPlayers, fetchTournament } from '../lib/api';
@@ -21,9 +21,11 @@ export default function TournamentScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(true);
   const [rulesVisible, setRulesVisible] = useState(false);
   const [tab, setTab] = useState<SubTab>('standings');
+  const navigatingFixtureId = useRef<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
+    navigatingFixtureId.current = null;
     Promise.all([fetchTournament(tournamentId), fetchPlayers()])
       .then(([tournamentData, loadedPlayers]) => {
         setData(tournamentData);
@@ -56,10 +58,11 @@ export default function TournamentScreen({ navigation, route }: any) {
   }
 
   function playFixture(fixture: TournamentMatch) {
-    if (!data || fixture.winner_entry_id) return;
+    if (!data || fixture.winner_entry_id || navigatingFixtureId.current === fixture.id) return;
     const teamA = entryById.get(fixture.team_a_entry_id);
     const teamB = entryById.get(fixture.team_b_entry_id);
     if (!teamA || !teamB) return;
+    navigatingFixtureId.current = fixture.id;
     navigation.navigate('LiveMatch', {
       mode: data.tournament.mode,
       pointTarget: data.tournament.point_target,

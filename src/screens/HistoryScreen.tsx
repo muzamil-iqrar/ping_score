@@ -1,29 +1,40 @@
-import { colors, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
-import { fetchMatches, fetchPlayers } from '../lib/api';
+import { deleteMatch, fetchMatches, fetchPlayers } from '../lib/api';
 import { Match, Player } from '../lib/types';
 
 export default function HistoryScreen() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      Promise.all([fetchMatches(), fetchPlayers()])
-        .then(([m, p]) => {
-          setMatches(m);
-          setPlayers(p);
-        })
-        .catch((e) => Alert.alert('Error', e.message));
-    }, [])
-  );
+  const load = useCallback(() => {
+    Promise.all([fetchMatches(), fetchPlayers()])
+      .then(([m, p]) => {
+        setMatches(m);
+        setPlayers(p);
+      })
+      .catch((e) => Alert.alert('Error', e.message));
+  }, []);
+
+  useFocusEffect(load);
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
   function label(ids: string[]) {
     return ids.map((id) => playerById.get(id)?.name ?? '?').join(' & ');
+  }
+
+  function handleDelete(match: Match) {
+    confirmDestructive('Delete match', 'Remove this match from your history?', 'Delete', async () => {
+      try {
+        await deleteMatch(match.id);
+        load();
+      } catch (e: any) {
+        Alert.alert('Error', e.message);
+      }
+    });
   }
 
   return (
@@ -48,6 +59,9 @@ export default function HistoryScreen() {
               <Text style={styles.score}>{item.team_a_score} - {item.team_b_score}</Text>
               <Text style={styles.date}>{new Date(item.played_at).toLocaleDateString()}</Text>
             </View>
+            <TouchableOpacity accessibilityLabel="Delete match" style={styles.deleteButton} onPress={() => handleDelete(item)}>
+              <Text style={styles.deleteButtonIcon}>×</Text>
+            </TouchableOpacity>
           </Reveal>
         );
       }}
@@ -67,4 +81,6 @@ const styles = StyleSheet.create({
   winnerText: { fontWeight: '800', color: colors.text },
   score: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 3 },
   date: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  deleteButton: { paddingVertical: 6, paddingHorizontal: 8 },
+  deleteButtonIcon: { color: colors.muted, fontSize: 22 },
 });

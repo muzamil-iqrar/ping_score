@@ -1,4 +1,4 @@
-import { colors, Reveal, Touch as TouchableOpacity, ui, useReducedMotion } from '../components/ui';
+import { colors, confirmDestructive, Reveal, Touch as TouchableOpacity, ui, useReducedMotion } from '../components/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -31,6 +31,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   const [teamA, setTeamA] = useState<string[]>(route.params.teamA);
   const [teamB, setTeamB] = useState<string[]>(route.params.teamB);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const sounds = useMatchSounds();
   const reducedMotion = useReducedMotion();
   const wide = useWindowDimensions().width > 680;
@@ -74,7 +75,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   }
 
   async function handlePoint(team: 'a' | 'b') {
-    if (match.winner || saving) return;
+    if (match.winner || saving || savingRef.current) return;
     const next = scorePoint(match, team);
     setMatch(next);
     bump(team === 'a' ? scoreAScale : scoreBScale);
@@ -82,6 +83,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
     sounds.playPoint();
 
     if (next.winner) {
+      savingRef.current = true;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       sounds.playWin();
       setSaving(true);
@@ -112,6 +114,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
         Alert.alert('Error saving match', e.message);
       } finally {
         setSaving(false);
+        savingRef.current = false;
       }
     }
   }
@@ -124,10 +127,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   }
 
   function handleResetGame() {
-    Alert.alert('Reset game', 'Restart the current game at 0-0?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: () => setMatch((m) => resetGame(m)) },
-    ]);
+    confirmDestructive('Reset game', 'Restart the current game at 0-0?', 'Reset', () => setMatch((m) => resetGame(m)));
   }
 
   function isServing(team: 'a' | 'b', slot: number) {

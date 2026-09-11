@@ -50,10 +50,12 @@ function isDeuceZone(scoreA: number, scoreB: number, pointTarget: number): boole
 /** How many total points have been played when the serve last changed, given the switch-every-N (or every-1 at deuce) rule. */
 function serveTurnIndex(pointsPlayed: number, scoreA: number, scoreB: number, pointTarget: number, serveInterval: number): number {
   if (isDeuceZone(scoreA, scoreB, pointTarget)) {
-    // Every point up to deuce entry used the every-N rule; after that, every 1.
-    const pointsBeforeDeuce = serveInterval * (pointTarget - 1);
+    // Deuce zone (both sides >= pointTarget - 1) is first reached after exactly 2*(pointTarget-1)
+    // points, regardless of path. Every point up to there used the every-N rule; after that, every 1.
+    const pointsBeforeDeuce = 2 * (pointTarget - 1);
+    const turnsBeforeDeuce = Math.floor(pointsBeforeDeuce / serveInterval);
     const pointsSinceDeuce = pointsPlayed - pointsBeforeDeuce;
-    return Math.floor(pointsBeforeDeuce / serveInterval) + pointsSinceDeuce;
+    return turnsBeforeDeuce + pointsSinceDeuce;
   }
   return Math.floor(pointsPlayed / serveInterval);
 }

@@ -1,4 +1,4 @@
-import { colors, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -42,21 +42,14 @@ export default function PlayersScreen() {
   }
 
   function handleRemove(player: Player) {
-    Alert.alert('Remove player', `Remove ${player.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await removePlayer(player.id);
-            load();
-          } catch (e: any) {
-            Alert.alert('Error', e.message);
-          }
-        },
-      },
-    ]);
+    confirmDestructive('Remove player', `Remove ${player.name}?`, 'Remove', async () => {
+      try {
+        await removePlayer(player.id);
+        load();
+      } catch (e: any) {
+        Alert.alert('Error', e.message);
+      }
+    });
   }
 
   return (

@@ -73,4 +73,23 @@ function assert(cond: boolean, msg: string) {
   assert(currentServer(m).team === 'b', 'custom interval: serve switches to b after 5 points');
 }
 
+// Regression: doubles + serve interval that doesn't divide evenly into deuce entry used to
+// underflow the rotation index and crash (e.g. target=20, interval=5, reaching 19-19).
+{
+  for (const mode of ['singles', 'doubles'] as const) {
+    for (const pointTarget of [10, 20]) {
+      for (const serveInterval of [1, 2, 5]) {
+        let m = createMatch(mode, pointTarget, serveInterval);
+        for (let i = 0; i < pointTarget - 1; i++) m = scorePoint(m, 'a');
+        for (let i = 0; i < pointTarget - 1; i++) m = scorePoint(m, 'b');
+        for (let i = 0; i < 20; i++) {
+          const server = currentServer(m);
+          assert(['a', 'b'].includes(server.team) && !Number.isNaN(server.slot), `deuce rotation crash: mode=${mode} target=${pointTarget} interval=${serveInterval}`);
+          m = scorePoint(m, i % 2 === 0 ? 'a' : 'b');
+        }
+      }
+    }
+  }
+}
+
 console.log('matchEngine: all checks passed');

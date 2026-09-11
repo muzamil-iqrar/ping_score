@@ -1,5 +1,20 @@
 import { PropsWithChildren, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Pressable, PressableProps, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AccessibilityInfo, Alert, Animated, Easing, Platform, Pressable, PressableProps, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+
+/**
+ * Destructive confirm dialog. react-native-web's Alert.alert() is a no-op, so on web this
+ * falls back to window.confirm — otherwise Cancel/Delete buttons silently do nothing in a browser.
+ */
+export function confirmDestructive(title: string, message: string, confirmLabel: string, onConfirm: () => void) {
+  if (Platform.OS === 'web') {
+    if (window.confirm(`${title}\n\n${message}`)) onConfirm();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: 'Cancel', style: 'cancel' },
+    { text: confirmLabel, style: 'destructive', onPress: onConfirm },
+  ]);
+}
 
 export const colors = {
   background: '#F7F8F6', surface: '#FFFFFF', raised: '#FFFFFF', border: '#E7EAE4',
