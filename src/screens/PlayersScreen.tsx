@@ -89,7 +89,7 @@ export default function PlayersScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Name"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={colors.muted}
                 value={name}
                 onChangeText={setName}
                 autoFocus
@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
   rowName: { color: colors.text, fontSize: 18, fontWeight: '500', flex: 1 },
   deleteButton: { paddingVertical: 6, paddingHorizontal: 10 },
   deleteButtonIcon: { color: colors.muted, fontSize: 25 },
-  addButton: { backgroundColor: colors.lime, padding: 16, alignItems: 'center', marginBottom: 22, borderRadius: 14 },
-  addButtonText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  addButton: { backgroundColor: colors.text, padding: 16, alignItems: 'center', marginBottom: 22, borderRadius: 14 },
+  addButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   modalContent: { flexGrow: 1, justifyContent: 'flex-end' },
   modalCard: { width: '100%', maxWidth: 600, alignSelf: 'center', backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
@@ -155,10 +155,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconOptionSelected: { borderColor: colors.lime, backgroundColor: colors.limeSoft },
+  iconOptionSelected: { borderColor: colors.green, backgroundColor: colors.greenSoft },
   iconOptionText: { fontSize: 22 },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, alignItems: 'center' },
   cancelText: { fontSize: 16, color: colors.muted },
-  saveButton: { backgroundColor: colors.lime, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14 },
-  saveButtonText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  saveButton: { backgroundColor: colors.text, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14 },
+  saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
 });

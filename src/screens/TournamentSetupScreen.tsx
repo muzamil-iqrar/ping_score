@@ -143,7 +143,7 @@ export default function TournamentSetupScreen({ navigation }: any) {
         ))}
       </View>
 
-      {players.length === 0 && <TouchableOpacity onPress={() => navigation.navigate('Players')}><EmptyState title="Build your lineup first" detail="Tap to add players, then return to create your tournament." /></TouchableOpacity>}
+      {players.length === 0 && <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'Players' })}><EmptyState title="Build your lineup first" detail="Tap to add players, then return to create your tournament." /></TouchableOpacity>}
       {mode === 'singles' ? (
         <>
           <Text style={styles.sectionTitle}>Players ({singlesPlayers.length} selected)</Text>

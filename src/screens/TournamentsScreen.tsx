@@ -28,19 +28,22 @@ export default function TournamentsScreen({ navigation }: any) {
         keyExtractor={(tournament) => tournament.id}
         refreshing={loading}
         onRefresh={load}
-        ListEmptyComponent={loading ? <ActivityIndicator size="large" color={colors.lime} /> : <EmptyState title="The title is up for grabs" detail="Create a round robin, pick your players, and get the competition going." />}
+        ListEmptyComponent={loading ? <ActivityIndicator size="large" color={colors.green} /> : <EmptyState title="The title is up for grabs" detail="Create a round robin, pick your players, and get the competition going." />}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Tournament', { tournamentId: item.id })}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.meta}>
-              {item.mode === 'singles' ? 'Singles' : 'Doubles'} · Round robin · First to {item.point_target}
-            </Text>
-            <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
+            <View style={styles.iconBox}><Text style={styles.icon}>🏆</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.meta}>
+                {item.mode === 'singles' ? 'Singles' : 'Doubles'} · Round robin · First to {item.point_target}
+              </Text>
+              <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
+            </View>
           </TouchableOpacity>
         )}
       />
       <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate('TournamentSetup')}>
-        <Text style={styles.createButtonText}>Create tournament  ↗</Text>
+        <Text style={styles.createButtonText}>+ Create tournament</Text>
       </TouchableOpacity>
     </View>
   );
@@ -51,10 +54,12 @@ const styles = StyleSheet.create({
   list: { ...ui.content, paddingBottom: 32 },
   emptyList: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 64 },
   empty: { color: colors.muted, fontSize: 15 },
-  card: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 },
-  name: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  meta: { color: colors.muted, marginTop: 5 },
-  date: { color: colors.muted, fontSize: 13, marginTop: 8 },
-  createButton: { backgroundColor: colors.lime, borderRadius: 16, padding: 17, alignItems: 'center', margin: 24, marginTop: 8, width: '90%', maxWidth: 712, alignSelf: 'center' },
-  createButtonText: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 },
+  iconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.purpleSoft, alignItems: 'center', justifyContent: 'center' },
+  icon: { fontSize: 22 },
+  name: { color: colors.text, fontSize: 17, fontWeight: '800' },
+  meta: { color: colors.muted, marginTop: 4, fontSize: 13 },
+  date: { color: colors.muted, fontSize: 12, marginTop: 6 },
+  createButton: { backgroundColor: colors.text, borderRadius: 16, padding: 17, alignItems: 'center', margin: 24, marginTop: 8, width: '90%', maxWidth: 712, alignSelf: 'center' },
+  createButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
 });

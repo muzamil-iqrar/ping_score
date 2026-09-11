@@ -94,7 +94,7 @@ export default function NewMatchScreen({ navigation }: any) {
       </View>
 
       <Text style={[styles.sectionTitle, { color: colors.lime }]}>04 / Team A {mode === 'doubles' ? `(${teamA.length}/2)` : ''}</Text>
-      {players.length === 0 && <TouchableOpacity onPress={() => navigation.navigate('Players')}><EmptyState title="Your table needs players" detail="Tap here to add players, then come back to pick your sides." /></TouchableOpacity>}
+      {players.length === 0 && <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'Players' })}><EmptyState title="Your table needs players" detail="Tap here to add players, then come back to pick your sides." /></TouchableOpacity>}
       <View style={styles.playerGrid}>
         {players.map((p) => (
           <TouchableOpacity
@@ -110,7 +110,7 @@ export default function NewMatchScreen({ navigation }: any) {
         ))}
       </View>
 
-      <Text style={[styles.sectionTitle, { color: colors.blue }]}>05 / Team B {mode === 'doubles' ? `(${teamB.length}/2)` : ''}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.red }]}>05 / Team B {mode === 'doubles' ? `(${teamB.length}/2)` : ''}</Text>
       <View style={styles.playerGrid}>
         {players.map((p) => (
           <TouchableOpacity
@@ -142,9 +142,9 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 20, marginBottom: 10 },
   rowOptions: { flexDirection: 'row', gap: 10 },
   option: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14, alignItems: 'center' },
-  optionSelected: { borderColor: colors.lime, backgroundColor: colors.limeSoft },
+  optionSelected: { borderColor: colors.green, backgroundColor: colors.greenSoft },
   optionText: { fontSize: 16, color: colors.text },
-  optionTextSelected: { color: colors.lime, fontWeight: '700' },
+  optionTextSelected: { color: colors.green, fontWeight: '700' },
   playerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   playerChip: {
     flexDirection: 'row',
@@ -155,11 +155,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
   },
-  playerChipSelectedA: { borderColor: colors.lime, backgroundColor: colors.limeSoft },
-  playerChipSelectedB: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
+  playerChipSelectedA: { borderColor: colors.green, backgroundColor: colors.greenSoft },
+  playerChipSelectedB: { borderColor: colors.red, backgroundColor: colors.redSoft },
   playerChipIcon: { fontSize: 18, marginRight: 6 },
   playerChipText: { color: colors.text, fontSize: 15, fontWeight: '500' },
-  startButton: { backgroundColor: colors.lime, padding: 16, alignItems: 'center', borderRadius: 14, marginTop: 30, marginBottom: 20 },
+  startButton: { backgroundColor: colors.text, padding: 16, alignItems: 'center', borderRadius: 14, marginTop: 30, marginBottom: 20 },
   startButtonDisabled: { backgroundColor: colors.border },
-  startButtonText: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+  startButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 });

@@ -114,3 +114,8 @@ export function undoPoint(state: MatchState): MatchState {
     lastScoringTeam: null,
   };
 }
+
+/** Restart the current game at 0-0, keeping the format (mode, pointTarget, serveInterval). */
+export function resetGame(state: MatchState): MatchState {
+  return createMatch(state.mode, state.pointTarget, state.serveInterval);
+}

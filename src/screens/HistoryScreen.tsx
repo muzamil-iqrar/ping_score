@@ -38,20 +38,15 @@ export default function HistoryScreen() {
         const aWon = item.winner === 'a';
         return (
           <Reveal style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.mode}>{item.mode === 'singles' ? 'Singles' : 'Doubles'} · to {item.point_target}</Text>
+            <View style={styles.iconBox}><Text style={styles.icon}>🏓</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.matchup}>
+                <Text style={aWon ? styles.winnerText : styles.team}>{label(item.team_a_player_ids)}</Text>
+                <Text style={styles.vs}> vs </Text>
+                <Text style={!aWon ? styles.winnerText : styles.team}>{label(item.team_b_player_ids)}</Text>
+              </Text>
+              <Text style={styles.score}>{item.team_a_score} - {item.team_b_score}</Text>
               <Text style={styles.date}>{new Date(item.played_at).toLocaleDateString()}</Text>
-            </View>
-            <View style={styles.matchup}>
-              <Text style={[styles.team, aWon && styles.winnerText]}>
-                {label(item.team_a_player_ids)} {aWon ? '🏆' : ''}
-              </Text>
-              <Text style={styles.score}>
-                {item.team_a_score} - {item.team_b_score}
-              </Text>
-              <Text style={[styles.team, !aWon && styles.winnerText]}>
-                {label(item.team_b_player_ids)} {!aWon ? '🏆' : ''}
-              </Text>
             </View>
           </Reveal>
         );
@@ -63,12 +58,13 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
-  card: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  mode: { fontSize: 13, color: colors.muted, fontWeight: '600' },
-  date: { fontSize: 13, color: colors.muted },
-  matchup: { alignItems: 'center' },
-  team: { color: colors.text, fontSize: 16, fontWeight: '500', marginBottom: 4 },
-  winnerText: { fontWeight: '800', color: colors.lime },
-  score: { color: colors.text, fontSize: 44, fontWeight: '800', letterSpacing: -2, fontVariant: ['tabular-nums'], marginVertical: 10 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 18, padding: 14, marginBottom: 10 },
+  iconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.greenSoft, alignItems: 'center', justifyContent: 'center' },
+  icon: { fontSize: 22 },
+  matchup: { fontSize: 14 },
+  team: { color: colors.text, fontWeight: '500' },
+  vs: { color: colors.muted },
+  winnerText: { fontWeight: '800', color: colors.text },
+  score: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 3 },
+  date: { fontSize: 12, color: colors.muted, marginTop: 2 },
 });
