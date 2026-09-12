@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import HeaderLogo from '../components/HeaderLogo';
@@ -11,7 +11,6 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const wide = useWindowDimensions().width > 760;
 
   async function signIn() {
     if (loading) return;
@@ -26,35 +25,37 @@ export default function LoginScreen() {
     } finally { setLoading(false); }
   }
 
-  return <SafeAreaView style={styles.container} edges={['top']}><KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-    <View style={styles.header}><HeaderLogo /><Text style={styles.headerNote}>FOR THE LOVE OF THE GAME</Text></View>
-    <View style={[styles.layout, wide && { flexDirection: 'row', gap: 64 }]}>
-      <Reveal style={[styles.intro, wide && styles.introWide]}>
-        <Image source={require('../../assets/login-table-tennis-3d.png')} resizeMode="contain" accessible={false} style={[styles.heroArt, wide && styles.heroArtWide]} />
-        <View style={styles.introCopy}><Text style={ui.eyebrow}>EVERY POINT COUNTS</Text><Text style={[styles.heroTitle, wide && { fontSize: 68, lineHeight: 70 }]}>Bring your{ '\n' }<Text style={{ color: colors.lime }}>game face.</Text></Text><Text style={styles.description}>Your players. Your rivalries. Your next win.{ '\n' }Keep it all at the table.</Text></View>
-      </Reveal>
-      <Reveal delay={160} style={styles.form}><Text style={styles.formEyebrow}>BACK AT THE TABLE</Text><Text style={styles.title}>Welcome back.</Text><Text style={styles.subtitle}>Sign in and get the next rally started.</Text>
+  return <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <Image source={require('../../assets/login-table-tennis-3d.png')} resizeMode="cover" accessible={false} style={styles.backgroundArt} />
+    <View style={styles.backdrop} />
+    <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.content}>
+        <View style={styles.header}><HeaderLogo /><Text style={styles.headerNote}>FOR THE LOVE OF THE GAME</Text></View>
+        <Text style={styles.heroTitle}>Bring your{'\n'}<Text style={{ color: colors.lime }}>game face.</Text></Text>
+        <Text style={styles.description}>Your players. Your rivalries. Your next win.{'\n'}Keep it all at the table.</Text>
+        <View style={styles.formSlot}><Reveal delay={100} style={styles.form}>
         <Text style={styles.label}>Email address</Text><TextInput style={styles.input} placeholder="you@example.com" placeholderTextColor={colors.muted} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" accessibilityLabel="Email address" value={email} onChangeText={setEmail} />
         <Text style={styles.label}>Password</Text><View style={styles.passwordRow}><TextInput style={styles.passwordInput} placeholder="Your password" placeholderTextColor={colors.muted} secureTextEntry={!showPassword} autoCapitalize="none" autoComplete="current-password" accessibilityLabel="Password" value={password} onChangeText={setPassword} onSubmitEditing={signIn} returnKeyType="go" /><Touch style={styles.eyeButton} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} onPress={() => setShowPassword(v => !v)}><Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text></Touch></View>
         {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
-        <Touch style={[ui.primary, styles.signInButton, { opacity: loading ? 0.6 : 1 }]} onPress={signIn} disabled={loading}>{loading ? <ActivityIndicator color={colors.ink} /> : <><Text style={ui.primaryText}>Let's play</Text><AppIcon name="arrow-right" size={20} color={colors.ink} /></>}</Touch>
-        <View style={styles.formFooter}><View style={styles.dot} /><Text style={styles.footerText}>A little competition. A lot of good games.</Text></View>
-      </Reveal>
-    </View><Text style={styles.bottomNote}>PING SCORE  /  KEEP THE RALLY GOING.</Text>
-  </ScrollView></KeyboardAvoidingView></SafeAreaView>;
+        <Touch style={[ui.primary, styles.signInButton, { opacity: loading ? 0.6 : 1 }]} onPress={signIn} disabled={loading}>{loading ? <ActivityIndicator color={colors.ink} /> : <><Text style={ui.primaryText}>Sign in</Text><AppIcon name="arrow-right" size={20} color={colors.ink} /></>}</Touch>
+      </Reveal></View>
+      </View>
+    </KeyboardAvoidingView>
+  </SafeAreaView>;
 }
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background }, content: { flexGrow: 1, padding: 24, maxWidth: 1120, alignSelf: 'center', width: '100%' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20, marginBottom: 44 }, headerNote: { color: colors.muted, fontSize: 8, letterSpacing: 1.5, maxWidth: 110, textAlign: 'right', lineHeight: 15 },
-  layout: { flex: 1, justifyContent: 'center' },
-  intro: { flex: 1, minHeight: 390, justifyContent: 'flex-start', position: 'relative', overflow: 'hidden', paddingTop: 18 },
-  introWide: { minHeight: 500, justifyContent: 'center' },
-  introCopy: { zIndex: 1 },
-  heroArt: { position: 'absolute', width: '112%', height: 340, left: '-6%', bottom: -24, opacity: 0.24 },
-  heroArtWide: { height: 440, bottom: -54, opacity: 0.3 },
-  heroTitle: { color: colors.text, fontSize: 48, lineHeight: 51, fontWeight: '800', letterSpacing: -2.5, marginTop: 8 }, description: { color: colors.muted, fontSize: 14, lineHeight: 23, marginTop: 18 },
-  form: { flex: 1, alignSelf: 'center', width: '100%', maxWidth: 440, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 26, padding: 26 }, formEyebrow: { color: colors.lime, fontSize: 9, fontWeight: '700', letterSpacing: 2, marginBottom: 14 }, title: { fontSize: 29, fontWeight: '700', color: colors.text, letterSpacing: -1 }, subtitle: { color: colors.muted, fontSize: 13, lineHeight: 21, marginTop: 8, marginBottom: 25 }, label: { color: colors.text, fontSize: 12, fontWeight: '600', marginBottom: 9 },
-  input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 15, marginBottom: 20, fontSize: 15, color: colors.text }, passwordRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 13 }, passwordInput: { flex: 1, minWidth: 0, padding: 15, fontSize: 15, color: colors.text }, eyeButton: { padding: 14 }, eyeText: { fontSize: 11, color: colors.lime, fontWeight: '700' }, error: { color: colors.danger, fontSize: 13, lineHeight: 20, marginTop: 12 },
-  signInButton: { marginTop: 24, flexDirection: 'row', gap: 8 },
-  formFooter: { flexDirection: 'row', gap: 7, alignItems: 'center', justifyContent: 'center', marginTop: 23 }, dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.lime }, footerText: { color: colors.muted, fontSize: 10, flexShrink: 1 }, bottomNote: { textAlign: 'center', color: colors.muted, fontSize: 8, letterSpacing: 2, marginTop: 38, marginBottom: 10 },
+  container: { flex: 1, backgroundColor: colors.background },
+  backgroundArt: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%', opacity: 0.5 },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(247, 248, 246, 0.38)' },
+  keyboardView: { flex: 1 },
+  content: { flex: 1, width: '100%', maxWidth: 520, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 18 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20 },
+  headerNote: { color: colors.muted, fontSize: 8, letterSpacing: 1.5, maxWidth: 110, textAlign: 'right', lineHeight: 15 },
+  heroTitle: { color: colors.text, fontSize: 40, lineHeight: 43, fontWeight: '800', letterSpacing: -2, marginTop: 24, marginBottom: 8 },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 23 },
+  formSlot: { flex: 1, justifyContent: 'center', paddingVertical: 14 },
+  form: { alignSelf: 'center', width: '100%', maxWidth: 420, backgroundColor: 'rgba(255, 255, 255, 0.94)', borderColor: colors.border, borderWidth: 1, borderRadius: 24, padding: 22 },
+  label: { color: colors.text, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 14, marginBottom: 16, fontSize: 15, color: colors.text }, passwordRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 13 }, passwordInput: { flex: 1, minWidth: 0, padding: 14, fontSize: 15, color: colors.text }, eyeButton: { padding: 14 }, eyeText: { fontSize: 11, color: colors.lime, fontWeight: '700' }, error: { color: colors.danger, fontSize: 13, lineHeight: 20, marginTop: 12 },
+  signInButton: { marginTop: 20, flexDirection: 'row', gap: 8 },
 });
