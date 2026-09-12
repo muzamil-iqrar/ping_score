@@ -1,4 +1,4 @@
-import { colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
@@ -49,7 +49,7 @@ export default function HistoryScreen() {
         const aWon = item.winner === 'a';
         return (
           <Reveal style={styles.card}>
-            <View style={styles.iconBox}><Text style={styles.icon}>🏓</Text></View>
+            <View style={styles.iconBox}><AppIcon name="table-tennis" size={23} color={colors.green} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.matchup}>
                 <Text style={aWon ? styles.winnerText : styles.team}>{label(item.team_a_player_ids)}</Text>
@@ -60,7 +60,7 @@ export default function HistoryScreen() {
               <Text style={styles.date}>{new Date(item.played_at).toLocaleDateString()}</Text>
             </View>
             <TouchableOpacity accessibilityLabel="Delete match" style={styles.deleteButton} onPress={() => handleDelete(item)}>
-              <Text style={styles.deleteButtonIcon}>×</Text>
+              <AppIcon name="delete-outline" size={22} color={colors.muted} />
             </TouchableOpacity>
           </Reveal>
         );
@@ -74,7 +74,6 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 18, padding: 14, marginBottom: 10 },
   iconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.greenSoft, alignItems: 'center', justifyContent: 'center' },
-  icon: { fontSize: 22 },
   matchup: { fontSize: 14 },
   team: { color: colors.text, fontWeight: '500' },
   vs: { color: colors.muted },
@@ -82,5 +81,4 @@ const styles = StyleSheet.create({
   score: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 3 },
   date: { fontSize: 12, color: colors.muted, marginTop: 2 },
   deleteButton: { paddingVertical: 6, paddingHorizontal: 8 },
-  deleteButtonIcon: { color: colors.muted, fontSize: 22 },
 });

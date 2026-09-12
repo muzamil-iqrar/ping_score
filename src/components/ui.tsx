@@ -1,5 +1,6 @@
-import { PropsWithChildren, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Alert, Animated, Easing, Platform, Pressable, PressableProps, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { ComponentProps, PropsWithChildren, useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Alert, Animated, Easing, Platform, Pressable, PressableProps, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 /**
  * Destructive confirm dialog. react-native-web's Alert.alert() is a no-op, so on web this
@@ -22,6 +23,12 @@ export const colors = {
   purple: '#6C5CE7', purpleSoft: '#EEEBFC', blue: '#2E86C1', blueSoft: '#E5F1F9', ink: '#FFFFFF', danger: '#E0453C',
   lime: '#1F9254', limeSoft: '#E3F5EA',
 };
+
+type AppIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+export function AppIcon({ name, size = 24, color = colors.text, style }: { name: AppIconName; size?: number; color?: string; style?: StyleProp<TextStyle> }) {
+  return <MaterialCommunityIcons name={name} size={size} color={color} style={style} />;
+}
 
 export function useReducedMotion() {
   const [reduced, setReduced] = useState(true);
@@ -64,25 +71,7 @@ export function PageHeading({ eyebrow, title, subtitle }: { eyebrow: string; tit
 }
 
 export function EmptyState({ title, detail }: { title: string; detail: string }) {
-  return <Reveal style={ui.empty}><View style={ui.emptyMark}><Text style={{ color: colors.green, fontSize: 30 }}>◎</Text></View><Text style={ui.emptyTitle}>{title}</Text><Text style={ui.emptyDetail}>{detail}</Text></Reveal>;
-}
-
-export function Court({ compact = false }: { compact?: boolean }) {
-  const progress = useRef(new Animated.Value(0)).current;
-  const reduced = useReducedMotion();
-  useEffect(() => {
-    if (reduced) { progress.setValue(0.5); return; }
-    const animation = Animated.loop(Animated.sequence([
-      Animated.timing(progress, { toValue: 1, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true, isInteraction: false }),
-      Animated.timing(progress, { toValue: 0, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true, isInteraction: false }),
-    ]));
-    animation.start();
-    return () => animation.stop();
-  }, [reduced, progress]);
-  return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[court.scene, compact && { height: 164 }]}>
-    <View style={court.orbit} />
-    <View style={court.table}><View style={court.centerLine} /><View style={court.net} /><View style={[court.paddle, { left: 18, top: 24, backgroundColor: colors.green, transform: [{ rotate: '-35deg' }] }]} /><View style={[court.paddle, { right: 18, bottom: 24, backgroundColor: colors.red, transform: [{ rotate: '145deg' }] }]} /><Animated.View style={[court.ball, { transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [-65, 65] }) }, { translateY: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [-25, -48, 25] }) }, { scale: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.35, 1] }) }] }]} /></View>
-  </View>;
+  return <Reveal style={ui.empty}><View style={ui.emptyMark}><AppIcon name="table-tennis" size={30} color={colors.green} /></View><Text style={ui.emptyTitle}>{title}</Text><Text style={ui.emptyDetail}>{detail}</Text></Reveal>;
 }
 
 export const ui = StyleSheet.create({
@@ -97,13 +86,4 @@ export const ui = StyleSheet.create({
   emptyMark: { width: 64, height: 64, borderRadius: 22, backgroundColor: colors.greenSoft, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '700', textAlign: 'center' },
   emptyDetail: { color: colors.muted, fontSize: 14, lineHeight: 22, textAlign: 'center', marginTop: 8, maxWidth: 300 },
-});
-const court = StyleSheet.create({
-  scene: { height: 230, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  orbit: { position: 'absolute', width: 265, height: 265, borderRadius: 140, borderWidth: 1, borderColor: '#E1E6DC' },
-  table: { width: 236, height: 138, borderRadius: 7, borderWidth: 2, borderColor: '#8FAE8A', backgroundColor: '#DCEEDD', transform: [{ rotate: '-12deg' }] },
-  centerLine: { position: 'absolute', top: '50%', left: 0, right: 0, height: 1, backgroundColor: '#8FAE8A' },
-  net: { position: 'absolute', left: '50%', top: -9, bottom: -9, width: 2, backgroundColor: '#4F7A4A' },
-  paddle: { position: 'absolute', width: 40, height: 47, borderRadius: 20, borderBottomWidth: 10, borderBottomColor: '#A08B66' },
-  ball: { position: 'absolute', left: '50%', top: '50%', width: 13, height: 13, borderRadius: 7, backgroundColor: '#FFFFFF', shadowColor: '#1F9254', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 4 },
 });

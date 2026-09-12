@@ -1,6 +1,7 @@
 import { Session } from '@supabase/supabase-js';
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { clearApiCache } from '../lib/api';
 
 type AuthContextValue = {
   session: Session | null;
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setLoading(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      clearApiCache();
       setSession(newSession);
     });
     return () => listener.subscription.unsubscribe();

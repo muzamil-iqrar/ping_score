@@ -53,6 +53,13 @@ function assert(cond: boolean, msg: string) {
   assert(JSON.stringify(servers) === JSON.stringify(expected), `doubles rotation: got ${servers}, expected ${expected}`);
 }
 
+// Doubles can start from a different player without changing the legal rotation.
+{
+  const m = createMatch('doubles', 20, 2, 2);
+  const server = currentServer(m);
+  assert(server.team === 'a' && server.slot === 1, 'doubles: rotation index 2 starts with team A player two');
+}
+
 // Undo restores server correctly.
 {
   let m = createMatch('singles', 10);
@@ -62,6 +69,22 @@ function assert(cond: boolean, msg: string) {
   m = undoPoint(m);
   assert(currentServer(m).team === 'a', 'undo: serve reverts to a');
   assert(m.scoreA === 1, 'undo: score reverts to 1');
+}
+
+// Undo can step back through multiple points in the exact order they were scored.
+{
+  let m = createMatch('singles', 10);
+  for (const team of ['a', 'b', 'b', 'a'] as const) m = scorePoint(m, team);
+  m = undoPoint(m); // Remove A: 1-2
+  m = undoPoint(m); // Remove B: 1-1
+  m = undoPoint(m); // Remove B: 1-0
+  assert(m.scoreA === 1 && m.scoreB === 0, 'multi-undo: three points are removed in reverse order');
+  assert(m.pointsPlayed === 1 && m.pointHistory.length === 1, 'multi-undo: history and point count stay in sync');
+  assert(m.lastScoringTeam === 'a', 'multi-undo: previous scoring team becomes available for another undo');
+  assert(currentServer(m).team === 'a', 'multi-undo: server is restored correctly');
+  m = undoPoint(m);
+  const empty = undoPoint(m);
+  assert(empty === m, 'multi-undo: undo at 0-0 is a no-op');
 }
 
 // Custom serve interval: switch every 5 points (every 1 at deuce).

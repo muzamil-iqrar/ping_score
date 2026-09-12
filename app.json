@@ -43,7 +43,8 @@
       ],
       "expo-asset",
       "expo-system-ui",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-font"
     ],
     "extra": {
       "eas": {

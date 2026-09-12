@@ -20,15 +20,22 @@ export type MatchState = {
   /** Total points played so far; drives whose turn it is to serve. */
   pointsPlayed: number;
   /** Index into DOUBLES_ROTATION for the *first* server of the match. Fixed per match. */
-  firstServerRotationIndex: number;
+  firstServerRotationIndex: 0 | 1 | 2 | 3;
   /** In singles: which team served first. */
   firstServerTeam: Team;
   winner: Team | null;
-  /** Team that scored the most recent point, for undo. Null if no points played. */
+  /** Every scored point, in order, so undo can step back more than once. */
+  pointHistory: Team[];
+  /** Team that scored the most recent remaining point. Null if no points remain. */
   lastScoringTeam: Team | null;
 };
 
-export function createMatch(mode: MatchMode, pointTarget: number, serveInterval: number = 2): MatchState {
+export function createMatch(
+  mode: MatchMode,
+  pointTarget: number,
+  serveInterval: number = 2,
+  firstServerRotationIndex: 0 | 1 | 2 | 3 = 0
+): MatchState {
   return {
     mode,
     pointTarget,
@@ -36,9 +43,10 @@ export function createMatch(mode: MatchMode, pointTarget: number, serveInterval:
     scoreA: 0,
     scoreB: 0,
     pointsPlayed: 0,
-    firstServerRotationIndex: 0,
+    firstServerRotationIndex,
     firstServerTeam: 'a',
     winner: null,
+    pointHistory: [],
     lastScoringTeam: null,
   };
 }
@@ -92,7 +100,7 @@ export function scorePoint(state: MatchState, team: Team): MatchState {
 
   const winner = computeWinner(scoreA, scoreB, state.pointTarget);
 
-  return { ...state, scoreA, scoreB, pointsPlayed, winner, lastScoringTeam: team };
+  return { ...state, scoreA, scoreB, pointsPlayed, winner, pointHistory: [...state.pointHistory, team], lastScoringTeam: team };
 }
 
 function computeWinner(scoreA: number, scoreB: number, pointTarget: number): Team | null {
@@ -103,21 +111,23 @@ function computeWinner(scoreA: number, scoreB: number, pointTarget: number): Tea
 
 /** Undo the most recently scored point (for correcting mis-taps). No-op if no points played yet. */
 export function undoPoint(state: MatchState): MatchState {
-  const team = state.lastScoringTeam;
+  const team = state.pointHistory[state.pointHistory.length - 1];
   if (!team) return state;
   const scoreA = team === 'a' ? state.scoreA - 1 : state.scoreA;
   const scoreB = team === 'b' ? state.scoreB - 1 : state.scoreB;
+  const pointHistory = state.pointHistory.slice(0, -1);
   return {
     ...state,
     scoreA,
     scoreB,
     pointsPlayed: state.pointsPlayed - 1,
     winner: null,
-    lastScoringTeam: null,
+    pointHistory,
+    lastScoringTeam: pointHistory[pointHistory.length - 1] ?? null,
   };
 }
 
 /** Restart the current game at 0-0, keeping the format (mode, pointTarget, serveInterval). */
 export function resetGame(state: MatchState): MatchState {
-  return createMatch(state.mode, state.pointTarget, state.serveInterval);
+  return createMatch(state.mode, state.pointTarget, state.serveInterval, state.firstServerRotationIndex);
 }

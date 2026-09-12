@@ -1,4 +1,4 @@
-import { colors, EmptyState, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, EmptyState, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -131,7 +131,8 @@ export default function NewMatchScreen({ navigation }: any) {
         onPress={handleStart}
         disabled={!ready}
       >
-        <Text style={styles.startButtonText}>{ready ? 'Start match  →' : 'Choose both sides to start'}</Text>
+        <Text style={styles.startButtonText}>{ready ? 'Start match' : 'Choose both sides to start'}</Text>
+        {ready && <AppIcon name="arrow-right" size={20} color={colors.ink} />}
       </TouchableOpacity>
     </ScrollView>
   );
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
   playerChipSelectedB: { borderColor: colors.red, backgroundColor: colors.redSoft },
   playerChipIcon: { fontSize: 18, marginRight: 6 },
   playerChipText: { color: colors.text, fontSize: 15, fontWeight: '500' },
-  startButton: { backgroundColor: colors.text, padding: 16, alignItems: 'center', borderRadius: 14, marginTop: 30, marginBottom: 20 },
+  startButton: { backgroundColor: colors.text, padding: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, borderRadius: 14, marginTop: 30, marginBottom: 20 },
   startButtonDisabled: { backgroundColor: colors.border },
   startButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 });

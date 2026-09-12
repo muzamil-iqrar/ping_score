@@ -1,10 +1,10 @@
-import { colors, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Modal, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { fetchPlayers, fetchTournament } from '../lib/api';
 import { Player, Tournament, TournamentEntry, TournamentMatch } from '../lib/types';
-import { calculateStandings } from '../state/tournamentEngine';
+import { calculateStandings, doublesStartingServerRotationIndex, selectNextTournamentFixture } from '../state/tournamentEngine';
 
 type TournamentData = {
   tournament: Tournament;
@@ -74,12 +74,15 @@ export default function TournamentScreen({ navigation, route }: any) {
       tournamentMatchId: fixture.id,
       teamAEntryId: fixture.team_a_entry_id,
       teamBEntryId: fixture.team_b_entry_id,
+      firstServerRotationIndex: data.tournament.mode === 'doubles'
+        ? doublesStartingServerRotationIndex(fixture, data.matches)
+        : undefined,
     });
   }
 
   function shareTournament() {
     if (!data) return;
-    const lines = standings.map((s) => `${s.rank}. ${entryLabel(s.entryId)} — ${s.wins}W ${s.played - s.wins}L`);
+    const lines = standings.map((s) => `${s.rank}. ${entryLabel(s.entryId)} — ${s.wins}W ${s.losses}L · ${s.matchPoints} TP`);
     Share.share({
       message: `${data.tournament.name}\n${data.tournament.mode === 'singles' ? 'Singles' : 'Doubles'} · Round robin\n\n${lines.join('\n')}`,
     }).catch((error) => Alert.alert('Could not share tournament', error.message));
@@ -90,14 +93,14 @@ export default function TournamentScreen({ navigation, route }: any) {
   }
   if (!data) return null;
 
-  const pendingFixture = data.matches.find((match) => !match.winner_entry_id);
+  const pendingFixture = selectNextTournamentFixture(data.matches);
   const complete = !pendingFixture;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Reveal style={styles.card}>
         <View style={styles.cardHeader}>
-          <View style={styles.cardIconBox}><Text style={styles.cardIcon}>🏆</Text></View>
+          <View style={styles.cardIconBox}><AppIcon name="trophy-outline" size={25} color={colors.purple} /></View>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{data.tournament.name}</Text>
             <Text style={styles.meta}>
@@ -105,7 +108,7 @@ export default function TournamentScreen({ navigation, route }: any) {
             </Text>
           </View>
           <TouchableOpacity style={styles.rulesButton} onPress={() => setRulesVisible(true)}>
-            <Text style={styles.rulesButtonText}>✎</Text>
+            <AppIcon name="pencil-outline" size={19} color={colors.text} />
           </TouchableOpacity>
         </View>
       </Reveal>
@@ -113,7 +116,7 @@ export default function TournamentScreen({ navigation, route }: any) {
       {complete && standings[0] && standings[0].rank === 1 && standings[1]?.rank !== 1 && (
         <View style={styles.championCard}>
           <Text style={styles.championLabel}>TOURNAMENT WINNER</Text>
-          <Text style={styles.championName}>🏆 {entryLabel(standings[0].entryId)}</Text>
+          <View style={styles.championNameRow}><AppIcon name="trophy-variant-outline" size={23} color={colors.green} /><Text style={styles.championName}>{entryLabel(standings[0].entryId)}</Text></View>
         </View>
       )}
 
@@ -147,7 +150,7 @@ export default function TournamentScreen({ navigation, route }: any) {
               <Text style={[styles.team, styles.headerText]}>Player</Text>
               <Text style={[styles.stat, styles.headerText]}>W</Text>
               <Text style={[styles.stat, styles.headerText]}>L</Text>
-              <Text style={[styles.stat, styles.headerText]}>Pts</Text>
+              <Text style={[styles.stat, styles.headerText]}>TP</Text>
             </View>
             {standings.map((standing) => (
               <View key={standing.entryId} style={styles.standingRow}>
@@ -155,11 +158,11 @@ export default function TournamentScreen({ navigation, route }: any) {
                 <Text style={styles.team} numberOfLines={1}>{entryLabel(standing.entryId)}</Text>
                 <Text style={styles.stat}>{standing.wins}</Text>
                 <Text style={styles.stat}>{standing.losses}</Text>
-                <Text style={styles.stat}>{standing.pointsFor}</Text>
+                <Text style={styles.stat}>{standing.matchPoints}</Text>
               </View>
             ))}
           </View>
-          <Text style={styles.tieBreakText}>W = wins. L = losses. Pts = total points scored. Ties are broken by point difference.</Text>
+          <Text style={styles.tieBreakText}>TP = tournament points. A win earns 2, a played loss earns 1. Ties use head-to-head results, then game and scoreboard-point ratios.</Text>
         </>
       )}
 
@@ -205,7 +208,7 @@ export default function TournamentScreen({ navigation, route }: any) {
       )}
 
       <TouchableOpacity style={styles.shareButton} onPress={shareTournament}>
-        <Text style={styles.shareButtonText}>⤴ Share Tournament</Text>
+        <AppIcon name="share-variant-outline" size={20} color={colors.text} /><Text style={styles.shareButtonText}>Share Tournament</Text>
       </TouchableOpacity>
 
       <Modal visible={rulesVisible} transparent animationType="fade" onRequestClose={() => setRulesVisible(false)}>
@@ -214,7 +217,7 @@ export default function TournamentScreen({ navigation, route }: any) {
             <Text style={styles.rulesTitle}>Tournament rules</Text>
             <Text style={styles.rulesText}>Every pair plays {data.tournament.matches_per_opponent === 1 ? 'one match' : `${data.tournament.matches_per_opponent} matches`}.</Text>
             <Text style={styles.rulesText}>A match is first to {data.tournament.point_target} points, with a two-point lead needed to win. Serve changes every {data.tournament.serve_interval} {data.tournament.serve_interval === 1 ? 'point' : 'points'}.</Text>
-            <Text style={styles.rulesText}>Standings use wins first, then point difference, then total points scored. Teams that remain equal share the same position.</Text>
+            <Text style={styles.rulesText}>Standings award 2 tournament points for a win, 1 for a played loss, and 0 for an unfinished match. Ties use head-to-head results, then game and scoreboard-point ratios. Teams that remain equal share the same position.</Text>
             <TouchableOpacity style={styles.closeButton} onPress={() => setRulesVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -232,14 +235,13 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.purpleSoft, borderRadius: 20, padding: 16, marginBottom: 18 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cardIconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  cardIcon: { fontSize: 24 },
   title: { letterSpacing: -0.4, color: colors.text, fontSize: 18, fontWeight: '800' },
   rulesButton: { width: 32, height: 32, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  rulesButtonText: { color: colors.text, fontWeight: '800' },
   meta: { color: colors.muted, fontSize: 12.5, marginTop: 4 },
   championCard: { backgroundColor: colors.greenSoft, borderColor: colors.green, borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 18, alignItems: 'center' },
   championLabel: { color: colors.green, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 },
-  championName: { color: colors.text, fontSize: 20, fontWeight: '800', marginTop: 5, textAlign: 'center' },
+  championNameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 5 },
+  championName: { color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' },
   tiedCard: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 18 },
   tiedTitle: { color: colors.text, fontWeight: '800', fontSize: 17 },
   tiedText: { color: colors.muted, marginTop: 4, lineHeight: 20 },
@@ -272,7 +274,7 @@ const styles = StyleSheet.create({
   playerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border },
   playerRowIcon: { fontSize: 22 },
   playerRowName: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  shareButton: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 16, alignItems: 'center', padding: 16, marginTop: 22 },
+  shareButton: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, padding: 16, marginTop: 22 },
   shareButtonText: { color: colors.text, fontSize: 15, fontWeight: '700' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', padding: 24 },
   rulesModal: { width: '100%', maxWidth: 520, alignSelf: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 22 },

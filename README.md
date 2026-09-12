@@ -13,7 +13,7 @@ Use Node.js 22.13 or newer and Expo Go for SDK 57. The app uses Expo SDK 57, Rea
 5. `npm install`
 6. `npx expo start` — scan the QR code with Expo Go on your phone, or press `i`/`a` for a simulator.
 
-If the app was already set up, run [`supabase/tournament_migration.sql`](supabase/tournament_migration.sql) in the Supabase SQL editor before using Tournament mode. If you ran that migration before the matches-per-opponent setting was added, also run [`supabase/tournament_settings_migration.sql`](supabase/tournament_settings_migration.sql).
+If the app was already set up, run [`supabase/tournament_migration.sql`](supabase/tournament_migration.sql) in the Supabase SQL editor before using Tournament mode. If you ran that migration before the matches-per-opponent setting was added, also run [`supabase/tournament_settings_migration.sql`](supabase/tournament_settings_migration.sql). Run [`supabase/atomic_tournament_creation.sql`](supabase/atomic_tournament_creation.sql) to make tournament creation transactional.
 
 ## Keep Supabase awake
 

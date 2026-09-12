@@ -1,4 +1,4 @@
-import { calculateStandings, generateRoundRobinFixtures } from './tournamentEngine';
+import { calculateStandings, doublesStartingServerRotationIndex, generateRoundRobinFixtures, selectNextTournamentFixture } from './tournamentEngine';
 
 function assert(condition: boolean, message: string) {
   if (!condition) throw new Error('FAILED: ' + message);
@@ -24,18 +24,57 @@ function assert(condition: boolean, message: string) {
 }
 
 {
+  const fixtures = generateRoundRobinFixtures(['a', 'b', 'c', 'd', 'e', 'f']).map((fixture, index) => ({
+    id: String(index),
+    round_number: fixture.roundNumber,
+    team_a_entry_id: fixture.teamAId,
+    team_b_entry_id: fixture.teamBId,
+    team_a_score: fixture.roundNumber === 1 ? 10 : null,
+    team_b_score: fixture.roundNumber === 1 ? 5 : null,
+    winner_entry_id: fixture.roundNumber === 1 ? fixture.teamAId : null,
+    played_at: fixture.roundNumber === 1 ? new Date(2026, 0, 1, 0, index).toISOString() : null,
+  }));
+  const lastPlayed = fixtures.filter((fixture) => fixture.winner_entry_id).at(-1)!;
+  const next = selectNextTournamentFixture(fixtures)!;
+  const lastEntries = new Set([lastPlayed.team_a_entry_id, lastPlayed.team_b_entry_id]);
+  assert(next.round_number === 2, 'rest scheduling stays in the earliest unfinished round');
+  assert(!lastEntries.has(next.team_a_entry_id) && !lastEntries.has(next.team_b_entry_id), 'rest scheduling avoids immediate repeats when possible');
+}
+
+{
+  const completed = [
+    { round_number: 1, team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: 10, team_b_score: 7, winner_entry_id: 'a', played_at: '2026-01-01T00:00:00.000Z' },
+  ];
+  const firstFixture = { round_number: 1, team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: null, team_b_score: null, winner_entry_id: null, played_at: null };
+  const secondFixture = { round_number: 2, team_a_entry_id: 'b', team_b_entry_id: 'a', team_a_score: null, team_b_score: null, winner_entry_id: null, played_at: null };
+  assert(doublesStartingServerRotationIndex(firstFixture, []) === 0, 'doubles start: first match starts with team A player one');
+  assert(doublesStartingServerRotationIndex(secondFixture, completed) === 3, 'doubles start: the same team switches to player two in the return match');
+}
+
+{
   const standings = calculateStandings(['a', 'b', 'c'], [
     { team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: 10, team_b_score: 7, winner_entry_id: 'a' },
     { team_a_entry_id: 'c', team_b_entry_id: 'a', team_a_score: 8, team_b_score: 10, winner_entry_id: 'a' },
     { team_a_entry_id: 'b', team_b_entry_id: 'c', team_a_score: null, team_b_score: null, winner_entry_id: null },
   ]);
-  assert(standings[0].entryId === 'a' && standings[0].wins === 2, 'wins rank first');
-  assert(standings[2].entryId === 'b' && standings[2].played === 1, 'unfinished fixtures are excluded');
+  const teamB = standings.find((standing) => standing.entryId === 'b')!;
+  assert(standings[0].entryId === 'a' && standings[0].matchPoints === 4, 'two wins earn four tournament points and rank first');
+  assert(teamB.played === 1 && teamB.matchPoints === 1, 'a played loss earns one point and unfinished fixtures are excluded');
 }
 
 {
   const standings = calculateStandings(['a', 'b'], []);
   assert(standings[0].rank === 1 && standings[1].rank === 1, 'fully tied entries share a rank');
+}
+
+{
+  const standings = calculateStandings(['a', 'b', 'c'], [
+    { team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: 11, team_b_score: 9, winner_entry_id: 'a' },
+    { team_a_entry_id: 'b', team_b_entry_id: 'c', team_a_score: 11, team_b_score: 5, winner_entry_id: 'b' },
+    { team_a_entry_id: 'c', team_b_entry_id: 'a', team_a_score: 11, team_b_score: 2, winner_entry_id: 'c' },
+  ]);
+  assert(standings.every((standing) => standing.matchPoints === 3), 'one win and one played loss earn three tournament points');
+  assert(standings.map((standing) => standing.entryId).join('') === 'bca', 'equal tournament points are resolved by tied-group point ratio');
 }
 
 console.log('tournamentEngine: all checks passed');

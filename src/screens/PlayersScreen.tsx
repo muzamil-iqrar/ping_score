@@ -1,4 +1,4 @@
-import { colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -55,7 +55,7 @@ export default function PlayersScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        ListHeaderComponent={<><PageHeading eyebrow="THE CLUB" title="Your starting lineup." subtitle={`${players.length} ${players.length === 1 ? 'player' : 'players'}. Always room for one more.`} /><TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}><Text style={styles.addButtonText}>+ Add player</Text></TouchableOpacity></>}
+        ListHeaderComponent={<><PageHeading eyebrow="THE CLUB" title="Your starting lineup." subtitle={`${players.length} ${players.length === 1 ? 'player' : 'players'}. Always room for one more.`} /><TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}><AppIcon name="plus" size={21} color={colors.ink} /><Text style={styles.addButtonText}>Add player</Text></TouchableOpacity></>}
         data={players}
         keyExtractor={(p) => p.id}
         contentContainerStyle={ui.content}
@@ -65,7 +65,7 @@ export default function PlayersScreen() {
             <Text style={styles.rowIcon}>{item.icon}</Text>
             <Text style={styles.rowName}>{item.name}</Text>
             <TouchableOpacity accessibilityLabel={`Remove ${item.name}`} style={styles.deleteButton} onPress={() => handleRemove(item)}>
-              <Text style={styles.deleteButtonIcon}>×</Text>
+              <AppIcon name="delete-outline" size={22} color={colors.muted} />
             </TouchableOpacity>
           </Reveal>
         )}
@@ -74,9 +74,9 @@ export default function PlayersScreen() {
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <KeyboardAvoidingView
           style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>New Player</Text>
               <TextInput
@@ -130,8 +130,7 @@ const styles = StyleSheet.create({
   rowIcon: { fontSize: 28, marginRight: 14 },
   rowName: { color: colors.text, fontSize: 18, fontWeight: '500', flex: 1 },
   deleteButton: { paddingVertical: 6, paddingHorizontal: 10 },
-  deleteButtonIcon: { color: colors.muted, fontSize: 25 },
-  addButton: { backgroundColor: colors.text, padding: 16, alignItems: 'center', marginBottom: 22, borderRadius: 14 },
+  addButton: { backgroundColor: colors.text, padding: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, marginBottom: 22, borderRadius: 14 },
   addButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   modalContent: { flexGrow: 1, justifyContent: 'flex-end' },

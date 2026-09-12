@@ -1,10 +1,10 @@
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { colors, useReducedMotion } from './src/components/ui';
+import { AppIcon, colors, useReducedMotion } from './src/components/ui';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
 import HeaderLogo from './src/components/HeaderLogo';
 import LoginScreen from './src/screens/LoginScreen';
@@ -21,7 +21,12 @@ import TournamentsScreen from './src/screens/TournamentsScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const TAB_ICONS: Record<string, string> = { Home: '⌂', Games: '↺', Tournaments: '🏆', Players: '♟' };
+const TAB_ICONS = {
+  Home: 'home-variant-outline',
+  Games: 'scoreboard-outline',
+  Tournaments: 'trophy-outline',
+  Players: 'account-group-outline',
+} as const;
 
 function MainTabs() {
   return (
@@ -32,8 +37,11 @@ function MainTabs() {
         headerShadowVisible: false,
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>{TAB_ICONS[route.name]}</Text>,
+        tabBarHideOnKeyboard: true,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarItemStyle: styles.tabItem,
+        tabBarStyle: styles.tabBar,
+        tabBarIcon: ({ color, size, focused }) => <AppIcon name={TAB_ICONS[route.name as keyof typeof TAB_ICONS]} color={color} size={focused ? size + 2 : size} />,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -80,9 +88,25 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['left', 'right']}>
         <AuthProvider><AppNavigator /></AuthProvider>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 0,
+    paddingTop: 7,
+    paddingBottom: 7,
+    elevation: 12,
+    shadowColor: '#15201C',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: -4 },
+  },
+  tabItem: { borderRadius: 14 },
+  tabLabel: { fontSize: 11, fontWeight: '700', marginTop: 2, marginBottom: Platform.OS === 'android' ? 1 : 0 },
+});
