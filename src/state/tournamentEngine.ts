@@ -214,9 +214,8 @@ function scoreRatio(forValue: number, againstValue: number): number {
   return forValue / againstValue;
 }
 
-function resolveTiedEntries(entryIds: string[], results: CompletedTournamentResult[]): string[][] {
-  if (entryIds.length < 2) return [entryIds];
-
+/** Head-to-head stats among only the given entries, used to explain a tie-break outcome. */
+export function calculateMiniTable(entryIds: string[], results: TournamentResult[]): Array<{ entryId: string } & TieStats> {
   const tiedEntryIds = new Set(entryIds);
   const stats = new Map<string, TieStats>(entryIds.map((entryId) => [entryId, {
     matchPoints: 0,
@@ -226,7 +225,7 @@ function resolveTiedEntries(entryIds: string[], results: CompletedTournamentResu
     pointsAgainst: 0,
   }]));
 
-  results.forEach((result) => {
+  results.filter(isCompletedResult).forEach((result) => {
     if (!tiedEntryIds.has(result.team_a_entry_id) || !tiedEntryIds.has(result.team_b_entry_id)) return;
     const teamA = stats.get(result.team_a_entry_id)!;
     const teamB = stats.get(result.team_b_entry_id)!;
@@ -247,6 +246,14 @@ function resolveTiedEntries(entryIds: string[], results: CompletedTournamentResu
       teamA.gameLosses += 1;
     }
   });
+
+  return entryIds.map((entryId) => ({ entryId, ...stats.get(entryId)! }));
+}
+
+function resolveTiedEntries(entryIds: string[], results: CompletedTournamentResult[]): string[][] {
+  if (entryIds.length < 2) return [entryIds];
+
+  const stats = new Map(calculateMiniTable(entryIds, results).map((row) => [row.entryId, row]));
 
   const metrics = [
     (entryId: string) => stats.get(entryId)!.matchPoints,

@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Modal, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { fetchPlayers, fetchTournament } from '../lib/api';
 import { Player, Tournament, TournamentEntry, TournamentMatch } from '../lib/types';
-import { calculateStandings, doublesStartingServerRotationIndex, selectNextTournamentFixture } from '../state/tournamentEngine';
+import { calculateMiniTable, calculateStandings, doublesStartingServerRotationIndex, selectNextTournamentFixture } from '../state/tournamentEngine';
 
 type TournamentData = {
   tournament: Tournament;
@@ -20,6 +20,7 @@ export default function TournamentScreen({ navigation, route }: any) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [rulesVisible, setRulesVisible] = useState(false);
+  const [tieBreakRank, setTieBreakRank] = useState<number | null>(null);
   const [tab, setTab] = useState<SubTab>('standings');
   const navigatingFixtureId = useRef<string | null>(null);
 
@@ -43,6 +44,16 @@ export default function TournamentScreen({ navigation, route }: any) {
     () => calculateStandings(data?.entries.map((entry) => entry.id) ?? [], data?.matches ?? []),
     [data]
   );
+  const tiedRanks = useMemo(() => {
+    const counts = new Map<number, number>();
+    standings.forEach((s) => counts.set(s.rank, (counts.get(s.rank) ?? 0) + 1));
+    return new Set(Array.from(counts.entries()).filter(([, count]) => count > 1).map(([rank]) => rank));
+  }, [standings]);
+  const miniTable = useMemo(() => {
+    if (tieBreakRank === null || !data) return [];
+    const tiedEntryIds = standings.filter((s) => s.rank === tieBreakRank).map((s) => s.entryId);
+    return calculateMiniTable(tiedEntryIds, data.matches);
+  }, [tieBreakRank, standings, data]);
   const rounds = useMemo(() => {
     const grouped = new Map<number, TournamentMatch[]>();
     data?.matches.forEach((match) => {
@@ -159,6 +170,13 @@ export default function TournamentScreen({ navigation, route }: any) {
                 <Text style={styles.stat}>{standing.wins}</Text>
                 <Text style={styles.stat}>{standing.losses}</Text>
                 <Text style={styles.stat}>{standing.matchPoints}</Text>
+                {tiedRanks.has(standing.rank) ? (
+                  <TouchableOpacity style={styles.whyButton} onPress={() => setTieBreakRank(standing.rank)}>
+                    <Text style={styles.whyButtonText}>Why?</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.whyButtonSpacer} />
+                )}
               </View>
             ))}
           </View>
@@ -224,6 +242,38 @@ export default function TournamentScreen({ navigation, route }: any) {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={tieBreakRank !== null} transparent animationType="fade" onRequestClose={() => setTieBreakRank(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.rulesModal}>
+            <Text style={styles.rulesTitle}>Tie-break breakdown</Text>
+            <Text style={styles.rulesText}>Head-to-head results between the tied players only.</Text>
+            <View style={styles.standingsCard}>
+              <View style={[styles.standingRow, styles.standingHeader]}>
+                <Text style={[styles.team, styles.headerText]}>Player</Text>
+                <Text style={[styles.stat, styles.headerText]}>TP</Text>
+                <Text style={[styles.stat, styles.headerText]}>GW</Text>
+                <Text style={[styles.stat, styles.headerText]}>GL</Text>
+                <Text style={[styles.miniRatio, styles.headerText]}>Pts ratio</Text>
+              </View>
+              {miniTable.map((row) => (
+                <View key={row.entryId} style={styles.standingRow}>
+                  <Text style={styles.team} numberOfLines={1}>{entryLabel(row.entryId)}</Text>
+                  <Text style={styles.stat}>{row.matchPoints}</Text>
+                  <Text style={styles.stat}>{row.gameWins}</Text>
+                  <Text style={styles.stat}>{row.gameLosses}</Text>
+                  <Text style={styles.miniRatio}>
+                    {row.pointsFor}:{row.pointsAgainst} ({row.pointsAgainst === 0 ? '∞' : (row.pointsFor / row.pointsAgainst).toFixed(3)})
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setTieBreakRank(null)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -261,6 +311,10 @@ const styles = StyleSheet.create({
   team: { color: colors.text, flex: 1, fontSize: 14, fontWeight: '600', marginHorizontal: 8 },
   stat: { color: colors.text, width: 34, textAlign: 'center', fontWeight: '700' },
   tieBreakText: { color: colors.muted, fontSize: 12, marginTop: 6, marginBottom: 22 },
+  whyButton: { marginLeft: 6, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, backgroundColor: colors.purpleSoft },
+  whyButtonText: { color: colors.purple, fontSize: 11, fontWeight: '800' },
+  whyButtonSpacer: { width: 0 },
+  miniRatio: { color: colors.text, width: 96, textAlign: 'right', fontWeight: '700', fontSize: 12 },
   round: { marginBottom: 18 },
   roundTitle: { color: colors.muted, fontSize: 13, fontWeight: '800', letterSpacing: 0.8, marginBottom: 7 },
   fixture: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 13, marginBottom: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface },
