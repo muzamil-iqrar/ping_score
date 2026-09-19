@@ -17,6 +17,16 @@ export function confirmDestructive(title: string, message: string, confirmLabel:
   ]);
 }
 
+/**
+ * Message text for a caught value. Supabase/network rejections are not always Error
+ * instances, and Alert.alert() throws on an undefined message — so never read .message directly.
+ */
+export function errorMessage(error: unknown): string {
+  if (typeof error === 'string' && error) return error;
+  const message = (error as { message?: unknown } | null | undefined)?.message;
+  return typeof message === 'string' && message ? message : 'Something went wrong. Please try again.';
+}
+
 export const colors = {
   background: '#F7F8F6', surface: '#FFFFFF', raised: '#FFFFFF', border: '#E7EAE4',
   text: '#15201C', muted: '#828E86', green: '#1F9254', greenSoft: '#E3F5EA', red: '#E0453C', redSoft: '#FCE7E5',

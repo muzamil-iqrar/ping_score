@@ -1,10 +1,10 @@
-import { AppIcon, colors, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, errorMessage, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Modal, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { fetchPlayers, fetchTournament } from '../lib/api';
 import { Player, Tournament, TournamentEntry, TournamentMatch } from '../lib/types';
-import { calculateMiniTable, calculateStandings, doublesStartingServerRotationIndex, selectNextTournamentFixture } from '../state/tournamentEngine';
+import { calculateStandings, doublesStartingServerRotationIndex, selectNextTournamentFixture } from '../state/tournamentEngine';
 
 type TournamentData = {
   tournament: Tournament;
@@ -20,7 +20,6 @@ export default function TournamentScreen({ navigation, route }: any) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [rulesVisible, setRulesVisible] = useState(false);
-  const [tieBreakRank, setTieBreakRank] = useState<number | null>(null);
   const [tab, setTab] = useState<SubTab>('standings');
   const navigatingFixtureId = useRef<string | null>(null);
 
@@ -32,7 +31,7 @@ export default function TournamentScreen({ navigation, route }: any) {
         setData(tournamentData);
         setPlayers(loadedPlayers);
       })
-      .catch((error) => Alert.alert('Could not load tournament', error.message))
+      .catch((error) => Alert.alert('Could not load tournament', errorMessage(error)))
       .finally(() => setLoading(false));
   }, [tournamentId]);
 
@@ -44,16 +43,6 @@ export default function TournamentScreen({ navigation, route }: any) {
     () => calculateStandings(data?.entries.map((entry) => entry.id) ?? [], data?.matches ?? []),
     [data]
   );
-  const tiedRanks = useMemo(() => {
-    const counts = new Map<number, number>();
-    standings.forEach((s) => counts.set(s.rank, (counts.get(s.rank) ?? 0) + 1));
-    return new Set(Array.from(counts.entries()).filter(([, count]) => count > 1).map(([rank]) => rank));
-  }, [standings]);
-  const miniTable = useMemo(() => {
-    if (tieBreakRank === null || !data) return [];
-    const tiedEntryIds = standings.filter((s) => s.rank === tieBreakRank).map((s) => s.entryId);
-    return calculateMiniTable(tiedEntryIds, data.matches);
-  }, [tieBreakRank, standings, data]);
   const rounds = useMemo(() => {
     const grouped = new Map<number, TournamentMatch[]>();
     data?.matches.forEach((match) => {
@@ -96,7 +85,7 @@ export default function TournamentScreen({ navigation, route }: any) {
     const lines = standings.map((s) => `${s.rank}. ${entryLabel(s.entryId)} — ${s.wins}W ${s.losses}L · ${s.matchPoints} TP`);
     Share.share({
       message: `${data.tournament.name}\n${data.tournament.mode === 'singles' ? 'Singles' : 'Doubles'} · Round robin\n\n${lines.join('\n')}`,
-    }).catch((error) => Alert.alert('Could not share tournament', error.message));
+    }).catch((error) => Alert.alert('Could not share tournament', errorMessage(error)));
   }
 
   if (loading && !data) {
@@ -161,6 +150,9 @@ export default function TournamentScreen({ navigation, route }: any) {
               <Text style={[styles.team, styles.headerText]}>Player</Text>
               <Text style={[styles.stat, styles.headerText]}>W</Text>
               <Text style={[styles.stat, styles.headerText]}>L</Text>
+              <Text style={[styles.stat, styles.headerText]}>PF</Text>
+              <Text style={[styles.stat, styles.headerText]}>PA</Text>
+              <Text style={[styles.stat, styles.headerText]}>DIFF</Text>
               <Text style={[styles.stat, styles.headerText]}>TP</Text>
             </View>
             {standings.map((standing) => (
@@ -169,18 +161,14 @@ export default function TournamentScreen({ navigation, route }: any) {
                 <Text style={styles.team} numberOfLines={1}>{entryLabel(standing.entryId)}</Text>
                 <Text style={styles.stat}>{standing.wins}</Text>
                 <Text style={styles.stat}>{standing.losses}</Text>
+                <Text style={styles.stat}>{standing.pointsFor}</Text>
+                <Text style={styles.stat}>{standing.pointsAgainst}</Text>
+                <Text style={styles.stat}>{standing.pointDifference > 0 ? `+${standing.pointDifference}` : standing.pointDifference}</Text>
                 <Text style={styles.stat}>{standing.matchPoints}</Text>
-                {tiedRanks.has(standing.rank) ? (
-                  <TouchableOpacity style={styles.whyButton} onPress={() => setTieBreakRank(standing.rank)}>
-                    <Text style={styles.whyButtonText}>Why?</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.whyButtonSpacer} />
-                )}
               </View>
             ))}
           </View>
-          <Text style={styles.tieBreakText}>TP = tournament points. A win earns 2, a played loss earns 1. Ties use head-to-head results, then game and scoreboard-point ratios.</Text>
+          <Text style={styles.tieBreakText}>TP = tournament points, 2 for a win and 0 for a loss. PF and PA are points scored and conceded; DIFF is the difference. Equal TP is decided by DIFF, then by PF.</Text>
         </>
       )}
 
@@ -235,7 +223,7 @@ export default function TournamentScreen({ navigation, route }: any) {
             <Text style={styles.rulesTitle}>Tournament rules</Text>
             <Text style={styles.rulesText}>Every pair plays {data.tournament.matches_per_opponent === 1 ? 'one match' : `${data.tournament.matches_per_opponent} matches`}.</Text>
             <Text style={styles.rulesText}>A match is first to {data.tournament.point_target} points, with a two-point lead needed to win. Serve changes every {data.tournament.serve_interval} {data.tournament.serve_interval === 1 ? 'point' : 'points'}.</Text>
-            <Text style={styles.rulesText}>Standings award 2 tournament points for a win, 1 for a played loss, and 0 for an unfinished match. Ties use head-to-head results, then game and scoreboard-point ratios. Teams that remain equal share the same position.</Text>
+            <Text style={styles.rulesText}>Standings award 2 tournament points for a win and 0 for a loss. Equal tournament points are separated by point difference (points scored minus points conceded), then by points scored. Teams that remain equal share the same position.</Text>
             <TouchableOpacity style={styles.closeButton} onPress={() => setRulesVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -243,37 +231,6 @@ export default function TournamentScreen({ navigation, route }: any) {
         </View>
       </Modal>
 
-      <Modal visible={tieBreakRank !== null} transparent animationType="fade" onRequestClose={() => setTieBreakRank(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.rulesModal}>
-            <Text style={styles.rulesTitle}>Tie-break breakdown</Text>
-            <Text style={styles.rulesText}>Head-to-head results between the tied players only.</Text>
-            <View style={styles.standingsCard}>
-              <View style={[styles.standingRow, styles.standingHeader]}>
-                <Text style={[styles.team, styles.headerText]}>Player</Text>
-                <Text style={[styles.stat, styles.headerText]}>TP</Text>
-                <Text style={[styles.stat, styles.headerText]}>GW</Text>
-                <Text style={[styles.stat, styles.headerText]}>GL</Text>
-                <Text style={[styles.miniRatio, styles.headerText]}>Pts ratio</Text>
-              </View>
-              {miniTable.map((row) => (
-                <View key={row.entryId} style={styles.standingRow}>
-                  <Text style={styles.team} numberOfLines={1}>{entryLabel(row.entryId)}</Text>
-                  <Text style={styles.stat}>{row.matchPoints}</Text>
-                  <Text style={styles.stat}>{row.gameWins}</Text>
-                  <Text style={styles.stat}>{row.gameLosses}</Text>
-                  <Text style={styles.miniRatio}>
-                    {row.pointsFor}:{row.pointsAgainst} ({row.pointsAgainst === 0 ? '∞' : (row.pointsFor / row.pointsAgainst).toFixed(3)})
-                  </Text>
-                </View>
-              ))}
-            </View>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setTieBreakRank(null)}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }
@@ -304,17 +261,13 @@ const styles = StyleSheet.create({
   tabButtonText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   tabButtonTextActive: { color: colors.green },
   standingsCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 20, overflow: 'hidden' },
-  standingRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  standingRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border },
   standingHeader: { borderTopWidth: 0, backgroundColor: colors.surface },
-  headerText: { color: colors.muted, fontSize: 12, fontWeight: '800' },
-  rank: { color: colors.text, width: 28, fontWeight: '700', textAlign: 'center' },
-  team: { color: colors.text, flex: 1, fontSize: 14, fontWeight: '600', marginHorizontal: 8 },
-  stat: { color: colors.text, width: 34, textAlign: 'center', fontWeight: '700' },
+  headerText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  rank: { color: colors.text, width: 20, fontWeight: '700', textAlign: 'center', fontSize: 13 },
+  team: { color: colors.text, flex: 1, minWidth: 0, fontSize: 13, fontWeight: '600', marginHorizontal: 6 },
+  stat: { color: colors.text, width: 30, textAlign: 'center', fontWeight: '700', fontSize: 12.5 },
   tieBreakText: { color: colors.muted, fontSize: 12, marginTop: 6, marginBottom: 22 },
-  whyButton: { marginLeft: 6, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, backgroundColor: colors.purpleSoft },
-  whyButtonText: { color: colors.purple, fontSize: 11, fontWeight: '800' },
-  whyButtonSpacer: { width: 0 },
-  miniRatio: { color: colors.text, width: 96, textAlign: 'right', fontWeight: '700', fontSize: 12 },
   round: { marginBottom: 18 },
   roundTitle: { color: colors.muted, fontSize: 13, fontWeight: '800', letterSpacing: 0.8, marginBottom: 7 },
   fixture: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 13, marginBottom: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface },

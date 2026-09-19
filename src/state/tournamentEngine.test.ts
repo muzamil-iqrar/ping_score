@@ -59,7 +59,7 @@ function assert(condition: boolean, message: string) {
   ]);
   const teamB = standings.find((standing) => standing.entryId === 'b')!;
   assert(standings[0].entryId === 'a' && standings[0].matchPoints === 4, 'two wins earn four tournament points and rank first');
-  assert(teamB.played === 1 && teamB.matchPoints === 1, 'a played loss earns one point and unfinished fixtures are excluded');
+  assert(teamB.played === 1 && teamB.matchPoints === 0, 'a loss earns no tournament points and unfinished fixtures are excluded');
 }
 
 {
@@ -68,13 +68,36 @@ function assert(condition: boolean, message: string) {
 }
 
 {
+  // a: 11+2 for, 9+11 against => -7. b: 9+11 for, 11+5 against => +4. c: 5+11 for, 11+2 against => +3.
   const standings = calculateStandings(['a', 'b', 'c'], [
     { team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: 11, team_b_score: 9, winner_entry_id: 'a' },
     { team_a_entry_id: 'b', team_b_entry_id: 'c', team_a_score: 11, team_b_score: 5, winner_entry_id: 'b' },
     { team_a_entry_id: 'c', team_b_entry_id: 'a', team_a_score: 11, team_b_score: 2, winner_entry_id: 'c' },
   ]);
-  assert(standings.every((standing) => standing.matchPoints === 3), 'one win and one played loss earn three tournament points');
-  assert(standings.map((standing) => standing.entryId).join('') === 'bca', 'equal tournament points are resolved by tied-group point ratio');
+  assert(standings.every((standing) => standing.matchPoints === 2), 'one win and one loss earn two tournament points');
+  assert(standings.map((standing) => standing.pointDifference).join(',') === '4,3,-7', 'standings expose point difference');
+  assert(standings.map((standing) => standing.entryId).join('') === 'bca', 'equal tournament points are resolved by point difference');
+  assert(standings.map((standing) => standing.rank).join(',') === '1,2,3', 'point difference separates equal tournament points into distinct ranks');
+}
+
+{
+  // Equal tournament points and equal difference: points scored decides.
+  const standings = calculateStandings(['a', 'b', 'c', 'd'], [
+    { team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: 11, team_b_score: 6, winner_entry_id: 'a' },
+    { team_a_entry_id: 'c', team_b_entry_id: 'd', team_a_score: 7, team_b_score: 2, winner_entry_id: 'c' },
+  ]);
+  const [first, second] = standings;
+  assert(first.entryId === 'a' && second.entryId === 'c', 'equal points and difference are resolved by points scored');
+  assert(first.rank === 1 && second.rank === 2, 'points scored produces distinct ranks');
+}
+
+{
+  const standings = calculateStandings(['a', 'b', 'c'], [
+    { team_a_entry_id: 'a', team_b_entry_id: 'b', team_a_score: 11, team_b_score: 5, winner_entry_id: 'a' },
+    { team_a_entry_id: 'c', team_b_entry_id: 'b', team_a_score: 11, team_b_score: 5, winner_entry_id: 'c' },
+  ]);
+  assert(standings[0].rank === 1 && standings[1].rank === 1, 'entries equal on points, difference and points scored share a rank');
+  assert(standings[2].rank === 3, 'a shared rank consumes the position below it');
 }
 
 console.log('tournamentEngine: all checks passed');

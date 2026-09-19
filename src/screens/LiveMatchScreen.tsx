@@ -1,11 +1,11 @@
-import { AppIcon, colors, confirmDestructive, Reveal, Touch as TouchableOpacity, ui, useReducedMotion } from '../components/ui';
+import { AppIcon, colors, confirmDestructive, errorMessage, Reveal, Touch as TouchableOpacity, ui, useReducedMotion } from '../components/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { recordMatch, recordTournamentMatchResult } from '../lib/api';
 import { ActiveMatchParams, ActiveMatchSnapshot, clearActiveMatch, saveActiveMatch } from '../lib/activeMatch';
 import { useMatchSounds } from '../lib/sounds';
-import { createMatch, currentServer, MatchState, resetGame, scorePoint, undoPoint } from '../state/matchEngine';
+import { createMatch, currentServer, MatchState, resetGame, scorePoint, swapMatchSides, undoPoint } from '../state/matchEngine';
 import { useAuth } from '../state/AuthContext';
 
 type Props = {
@@ -22,12 +22,13 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   const [match, setMatch] = useState(() => restoredMatch ?? createMatch(mode, pointTarget, serveInterval, firstServerRotationIndex));
   const [teamA, setTeamA] = useState<string[]>(route.params.teamA);
   const [teamB, setTeamB] = useState<string[]>(route.params.teamB);
+  // True when the on-screen sides are reversed relative to the tournament fixture's A/B entries.
+  const [sidesSwapped, setSidesSwapped] = useState(Boolean(route.params.sidesSwapped));
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const sounds = useMatchSounds();
   const reducedMotion = useReducedMotion();
   const wide = useWindowDimensions().width > 680;
-  const canEditMatch = !tournamentMatchId;
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const server = currentServer(match);
@@ -83,6 +84,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
         teamAEntryId,
         teamBEntryId,
         firstServerRotationIndex,
+        sidesSwapped,
       },
     };
   }
@@ -90,12 +92,12 @@ export default function LiveMatchScreen({ navigation, route }: any) {
   useEffect(() => {
     if (!userId || match.winner) return;
     saveActiveMatch(userId, activeSnapshot(match)).catch((error) => console.warn('Could not autosave match', error));
-  }, [userId, match, teamA, teamB]);
+  }, [userId, match, teamA, teamB, sidesSwapped]);
 
   async function finishMatch(completedMatch: MatchState) {
     if (!completedMatch.winner || savingRef.current) return;
     savingRef.current = true;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     sounds.playWin();
     setSaving(true);
     try {
@@ -109,10 +111,14 @@ export default function LiveMatchScreen({ navigation, route }: any) {
         winner: completedMatch.winner,
       });
       if (tournamentMatchId && teamAEntryId && teamBEntryId) {
+        // On-screen side A may be the fixture's team B after a swap, so map scores and the
+        // winner back onto the fixture's own entries before recording the result.
+        const screenAEntryId = sidesSwapped ? teamBEntryId : teamAEntryId;
+        const screenBEntryId = sidesSwapped ? teamAEntryId : teamBEntryId;
         await recordTournamentMatchResult(tournamentMatchId, {
-          team_a_score: completedMatch.scoreA,
-          team_b_score: completedMatch.scoreB,
-          winner_entry_id: completedMatch.winner === 'a' ? teamAEntryId : teamBEntryId,
+          team_a_score: sidesSwapped ? completedMatch.scoreB : completedMatch.scoreA,
+          team_b_score: sidesSwapped ? completedMatch.scoreA : completedMatch.scoreB,
+          winner_entry_id: completedMatch.winner === 'a' ? screenAEntryId : screenBEntryId,
         });
       }
       if (userId) await clearActiveMatch(userId).catch((error) => console.warn('Could not clear saved match', error));
@@ -125,7 +131,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
         tournamentId,
       });
     } catch (e: any) {
-      Alert.alert('Error saving match', e.message);
+      Alert.alert('Error saving match', errorMessage(e));
     } finally {
       setSaving(false);
       savingRef.current = false;
@@ -137,7 +143,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
     const next = scorePoint(match, team);
     setMatch(next);
     bump(team === 'a' ? scoreAScale : scoreBScale);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     sounds.playPoint();
 
     if (next.winner) {
@@ -146,11 +152,13 @@ export default function LiveMatchScreen({ navigation, route }: any) {
     }
   }
 
+  // Swaps which side of the screen each team occupies. Scores, serve order and history
+  // travel with the teams, so a mid-match swap changes only the layout, never the game.
   function handleSwapSides() {
-    if (tournamentMatchId) return;
     setTeamA(teamB);
     setTeamB(teamA);
-    setMatch((m) => resetGame(m));
+    setSidesSwapped((swapped) => !swapped);
+    setMatch((m) => swapMatchSides(m));
   }
 
   function handleResetGame() {
@@ -202,7 +210,7 @@ export default function LiveMatchScreen({ navigation, route }: any) {
       <View style={styles.controlsRow}>
         <TouchableOpacity style={[styles.controlButton, (match.pointHistory.length === 0 || saving) && { opacity: 0.35 }]} disabled={match.pointHistory.length === 0 || saving} onPress={() => setMatch(undoPoint(match))}><AppIcon name="undo-variant" size={22} color={colors.text} /><Text style={styles.controlText}>Undo</Text></TouchableOpacity>
         <TouchableOpacity style={[styles.controlButton, saving && { opacity: 0.35 }]} disabled={saving} onPress={handleResetGame}><AppIcon name="restart" size={22} color={colors.text} /><Text style={styles.controlText}>Reset Game</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.controlButton, (saving || !canEditMatch) && { opacity: 0.35 }]} disabled={saving || !canEditMatch} onPress={handleSwapSides}><AppIcon name="swap-horizontal" size={22} color={colors.text} /><Text style={styles.controlText}>Swap Sides</Text></TouchableOpacity>
+        <TouchableOpacity style={[styles.controlButton, saving && { opacity: 0.35 }]} disabled={saving} onPress={handleSwapSides}><AppIcon name="swap-horizontal" size={22} color={colors.text} /><Text style={styles.controlText}>Swap Sides</Text></TouchableOpacity>
       </View>
       <Text style={styles.bottomNote}>{deuce ? 'SERVE CHANGES EVERY POINT AT DEUCE' : `SERVE CHANGES EVERY ${serveInterval} ${serveInterval === 1 ? 'POINT' : 'POINTS'}`}</Text>
     </ScrollView>

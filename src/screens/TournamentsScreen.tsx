@@ -1,4 +1,4 @@
-import { AppIcon, colors, confirmDestructive, EmptyState, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, confirmDestructive, EmptyState, errorMessage, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
@@ -13,7 +13,7 @@ export default function TournamentsScreen({ navigation }: any) {
     setLoading(true);
     fetchTournaments({ force })
       .then(setTournaments)
-      .catch((error) => Alert.alert('Could not load tournaments', error.message))
+      .catch((error) => Alert.alert('Could not load tournaments', errorMessage(error)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -25,7 +25,7 @@ export default function TournamentsScreen({ navigation }: any) {
         await deleteTournament(tournament.id);
         load();
       } catch (error: any) {
-        Alert.alert('Error', error.message);
+        Alert.alert('Error', errorMessage(error));
       }
     });
   }

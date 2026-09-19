@@ -28,12 +28,12 @@ export default function MatchResultScreen({ navigation, route }: any) {
     {tournamentId && <Reveal delay={380} style={styles.impactCard}>
       <Text style={styles.impactHeading}>TOURNAMENT POINTS</Text>
       <View style={styles.impactRow}>
-        <View style={styles.impactTeam}><Text style={styles.impactName} numberOfLines={1}>{teamALabel}</Text><Text style={styles.impactOutcome}>{teamAWon ? 'Win recorded' : 'Played loss recorded'}</Text></View>
-        <Text style={[styles.impactValue, { color: teamAWon ? colors.green : colors.purple }]}>{teamAWon ? '+2 tournament points' : '+1 tournament point'}</Text>
+        <View style={styles.impactTeam}><Text style={styles.impactName} numberOfLines={1}>{teamALabel}</Text><Text style={styles.impactOutcome}>{teamAWon ? 'Win recorded' : 'Loss recorded'}</Text></View>
+        <Text style={[styles.impactValue, { color: teamAWon ? colors.green : colors.muted }]}>{teamAWon ? '+2 tournament points' : 'No tournament points'}</Text>
       </View>
       <View style={[styles.impactRow, styles.impactRowBorder]}>
-        <View style={styles.impactTeam}><Text style={styles.impactName} numberOfLines={1}>{teamBLabel}</Text><Text style={styles.impactOutcome}>{teamAWon ? 'Played loss recorded' : 'Win recorded'}</Text></View>
-        <Text style={[styles.impactValue, { color: teamAWon ? colors.purple : colors.green }]}>{teamAWon ? '+1 tournament point' : '+2 tournament points'}</Text>
+        <View style={styles.impactTeam}><Text style={styles.impactName} numberOfLines={1}>{teamBLabel}</Text><Text style={styles.impactOutcome}>{teamAWon ? 'Loss recorded' : 'Win recorded'}</Text></View>
+        <Text style={[styles.impactValue, { color: teamAWon ? colors.muted : colors.green }]}>{teamAWon ? 'No tournament points' : '+2 tournament points'}</Text>
       </View>
     </Reveal>}
     <Reveal delay={420} style={{ width: '100%' }}><Touch style={[ui.primary, styles.primaryAction]} onPress={() => navigation.reset({ index: 1, routes: [{ name: 'MainTabs' }, tournamentId ? { name: 'Tournament', params: { tournamentId } } : { name: 'NewMatch' }] })}><Text style={ui.primaryText}>{tournamentId ? 'Back to tournament' : 'Run it back'}</Text><AppIcon name="arrow-right" size={20} color={colors.ink} /></Touch><Touch style={styles.homeButton} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] })}><Text style={styles.homeText}>Back to home</Text></Touch></Reveal>

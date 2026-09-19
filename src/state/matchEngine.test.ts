@@ -1,4 +1,4 @@
-import { createMatch, currentServer, scorePoint, undoPoint } from './matchEngine';
+import { createMatch, currentServer, scorePoint, swapMatchSides, undoPoint } from './matchEngine';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error('FAILED: ' + msg);
@@ -113,6 +113,39 @@ function assert(cond: boolean, msg: string) {
       }
     }
   }
+}
+
+// Swapping sides mirrors the match: the same physical player keeps serving, and the score
+// travels with its team rather than staying on its half of the screen.
+{
+  for (const mode of ['singles', 'doubles'] as const) {
+    for (const rotation of [0, 1, 2, 3] as const) {
+      let m = createMatch(mode, 10, 2, rotation);
+      m = scorePoint(m, 'a');
+      m = scorePoint(m, 'a');
+      m = scorePoint(m, 'b');
+
+      const before = currentServer(m);
+      const swapped = swapMatchSides(m);
+      const after = currentServer(swapped);
+
+      assert(swapped.scoreA === m.scoreB && swapped.scoreB === m.scoreA, `swap mirrors the score: mode=${mode}`);
+      assert(after.team !== before.team, `swap moves the serve to the other side: mode=${mode} rotation=${rotation}`);
+      if (mode === 'doubles') {
+        assert(after.slot === before.slot, `swap keeps the same serving slot: rotation=${rotation}`);
+      }
+      assert(swapMatchSides(swapped).scoreA === m.scoreA && swapMatchSides(swapped).scoreB === m.scoreB, 'swapping twice restores the original sides');
+
+      // The scoreboard must keep agreeing with the point history after a swap.
+      assert(swapped.pointHistory.filter((t) => t === 'a').length === swapped.scoreA, 'swap keeps history consistent with score A');
+      assert(swapped.pointHistory.filter((t) => t === 'b').length === swapped.scoreB, 'swap keeps history consistent with score B');
+    }
+  }
+
+  // A finished match keeps its winner pointing at the same team after a swap.
+  let decided = createMatch('singles', 10, 2);
+  for (let i = 0; i < 10; i++) decided = scorePoint(decided, 'a');
+  assert(decided.winner === 'a' && swapMatchSides(decided).winner === 'b', 'swap moves the winner to the other side');
 }
 
 console.log('matchEngine: all checks passed');

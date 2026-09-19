@@ -1,4 +1,4 @@
-import { colors, EmptyState, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
+import { colors, EmptyState, errorMessage, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -19,7 +19,7 @@ export default function TournamentSetupScreen({ navigation }: any) {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPlayers().then(setPlayers).catch((error) => Alert.alert('Error', error.message));
+      fetchPlayers().then(setPlayers).catch((error) => Alert.alert('Error', errorMessage(error)));
     }, [])
   );
 
@@ -67,7 +67,7 @@ export default function TournamentSetupScreen({ navigation }: any) {
       );
       navigation.replace('Tournament', { tournamentId: tournament.id });
     } catch (error: any) {
-      Alert.alert('Could not create tournament', error.message);
+      Alert.alert('Could not create tournament', errorMessage(error));
     } finally {
       setSaving(false);
     }

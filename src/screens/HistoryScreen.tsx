@@ -1,4 +1,4 @@
-import { AppIcon, colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, confirmDestructive, EmptyState, errorMessage, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
@@ -15,7 +15,7 @@ export default function HistoryScreen() {
         setMatches(m);
         setPlayers(p);
       })
-      .catch((e) => Alert.alert('Error', e.message));
+      .catch((e) => Alert.alert('Error', errorMessage(e)));
   }, []);
 
   useFocusEffect(load);
@@ -32,7 +32,7 @@ export default function HistoryScreen() {
         await deleteMatch(match.id);
         load();
       } catch (e: any) {
-        Alert.alert('Error', e.message);
+        Alert.alert('Error', errorMessage(e));
       }
     });
   }

@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AppIcon, colors, useReducedMotion } from './src/components/ui';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
@@ -29,6 +29,10 @@ const TAB_ICONS = {
 } as const;
 
 function MainTabs() {
+  // The root SafeAreaView deliberately skips the bottom edge so screens can paint into it,
+  // so the tab bar has to reserve the home-indicator inset itself or labels get clipped.
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 8);
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -40,7 +44,7 @@ function MainTabs() {
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: 56 + bottomInset, paddingBottom: bottomInset }],
         tabBarIcon: ({ color, size, focused }) => <AppIcon name={TAB_ICONS[route.name as keyof typeof TAB_ICONS]} color={color} size={focused ? size + 2 : size} />,
       })}
     >
@@ -100,7 +104,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 0,
     paddingTop: 7,
-    paddingBottom: 7,
     elevation: 12,
     shadowColor: '#15201C',
     shadowOpacity: 0.08,

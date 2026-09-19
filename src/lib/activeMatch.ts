@@ -14,6 +14,8 @@ export type ActiveMatchParams = {
   teamAEntryId?: string;
   teamBEntryId?: string;
   firstServerRotationIndex?: 0 | 1 | 2 | 3;
+  /** True when the on-screen sides were swapped away from the tournament fixture's A/B entries. */
+  sidesSwapped?: boolean;
 };
 
 export type ActiveMatchSnapshot = {
@@ -124,6 +126,7 @@ function normalizeSnapshot(value: unknown): ActiveMatchSnapshot | null {
     && isOptionalString(params.teamAEntryId)
     && isOptionalString(params.teamBEntryId)
     && isOptionalRotationIndex(params.firstServerRotationIndex)
+    && (params.sidesSwapped === undefined || typeof params.sidesSwapped === 'boolean')
     && match?.mode === params.mode
     && match?.pointTarget === params.pointTarget
     && match?.serveInterval === params.serveInterval;

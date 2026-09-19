@@ -6,7 +6,7 @@ import { fetchPlayers, fetchRecentMatches } from '../lib/api';
 import { ActiveMatchSnapshot, loadActiveMatch } from '../lib/activeMatch';
 import { Match, Player } from '../lib/types';
 import { useAuth } from '../state/AuthContext';
-import { AppIcon, colors, Reveal, Touch } from '../components/ui';
+import { AppIcon, colors, errorMessage, Reveal, Touch } from '../components/ui';
 
 export default function HomeScreen({ navigation }: { navigation: any }) {
   const wide = useWindowDimensions().width > 680;
@@ -29,7 +29,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         setMatches(loadedMatches);
         setPlayers(loadedPlayers);
       })
-      .catch((error) => Alert.alert('Could not load recent games', error.message))
+      .catch((error) => Alert.alert('Could not load recent games', errorMessage(error)))
       .finally(() => setLoadingGames(false));
   }, [session?.user.id]);
 
@@ -43,7 +43,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
   async function handleSignOut() {
     const { error } = await supabase.auth.signOut();
-    if (error) Alert.alert('Could not sign out', error.message);
+    if (error) Alert.alert('Could not sign out', errorMessage(error));
   }
 
   return <ScrollView style={styles.container} contentContainerStyle={styles.content}>

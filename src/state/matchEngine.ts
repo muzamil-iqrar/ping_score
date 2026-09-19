@@ -131,3 +131,30 @@ export function undoPoint(state: MatchState): MatchState {
 export function resetGame(state: MatchState): MatchState {
   return createMatch(state.mode, state.pointTarget, state.serveInterval, state.firstServerRotationIndex);
 }
+
+function mirroredFirstServerRotationIndex(state: MatchState): 0 | 1 | 2 | 3 {
+  const turn = serveTurnIndex(state.pointsPlayed, state.scoreA, state.scoreB, state.pointTarget, state.serveInterval);
+  const current = (state.firstServerRotationIndex + turn) % 4;
+  // + 4 before the modulo because turn can exceed the mirrored index.
+  return (((current ^ 1) - turn % 4 + 4) % 4) as 0 | 1 | 2 | 3;
+}
+
+/**
+ * Mirror the match across the two sides: team A's score, points and serve turn become team B's
+ * and vice versa. The same physical player keeps serving — only which side they're shown on changes.
+ */
+export function swapMatchSides(state: MatchState): MatchState {
+  return {
+    ...state,
+    scoreA: state.scoreB,
+    scoreB: state.scoreA,
+    firstServerTeam: opponent(state.firstServerTeam),
+    // currentServer() derives the live index as (firstServerRotationIndex + turn) % 4, so mirror
+    // the *current* entry (0<->1, 2<->3 keeps the slot, flips the team) and take the turn back off
+    // to get the first-server index that reproduces it.
+    firstServerRotationIndex: mirroredFirstServerRotationIndex(state),
+    winner: state.winner ? opponent(state.winner) : null,
+    pointHistory: state.pointHistory.map(opponent),
+    lastScoringTeam: state.lastScoringTeam ? opponent(state.lastScoringTeam) : null,
+  };
+}

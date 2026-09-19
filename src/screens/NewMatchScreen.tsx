@@ -1,4 +1,4 @@
-import { AppIcon, colors, EmptyState, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, EmptyState, errorMessage, PageHeading, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,7 +15,7 @@ export default function NewMatchScreen({ navigation }: any) {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPlayers().then(setPlayers).catch((e) => Alert.alert('Error', e.message));
+      fetchPlayers().then(setPlayers).catch((e) => Alert.alert('Error', errorMessage(e)));
     }, [])
   );
 

@@ -1,4 +1,4 @@
-import { AppIcon, colors, confirmDestructive, EmptyState, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
+import { AppIcon, colors, confirmDestructive, EmptyState, errorMessage, PageHeading, Reveal, Touch as TouchableOpacity, ui } from '../components/ui';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -23,7 +23,7 @@ export default function PlayersScreen() {
   const [icon, setIcon] = useState(PLAYER_ICONS[0]);
 
   const load = useCallback(() => {
-    fetchPlayers().then(setPlayers).catch((e) => Alert.alert('Error', e.message));
+    fetchPlayers().then(setPlayers).catch((e) => Alert.alert('Error', errorMessage(e)));
   }, []);
 
   useFocusEffect(load);
@@ -37,7 +37,7 @@ export default function PlayersScreen() {
       setModalVisible(false);
       load();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert('Error', errorMessage(e));
     }
   }
 
@@ -47,7 +47,7 @@ export default function PlayersScreen() {
         await removePlayer(player.id);
         load();
       } catch (e: any) {
-        Alert.alert('Error', e.message);
+        Alert.alert('Error', errorMessage(e));
       }
     });
   }
